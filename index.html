@@ -22,6 +22,8 @@
       border: 1px solid #ccc;
       padding: 20px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      max-height: 80vh;
+      overflow-y: auto;
     }
     #settings-button {
       position: fixed;
@@ -34,6 +36,7 @@
       width: 100%;
       border-collapse: collapse;
       margin: 20px 0;
+      background-color: #fff;
     }
     th, td {
       border: 1px solid #ccc;
@@ -42,10 +45,20 @@
     }
     th {
       background-color: #ddd;
+      border: 3px double #000; /* Dicke, doppelte Umrandung für Kopfzeile */
+    }
+    #week-plan td:first-child,
+    #week-plan th:first-child {
+      border: 3px double #000; /* Dicke, doppelte Umrandung für erste Spalte */
+      background-color: #f9f9f9;
     }
     .star {
       cursor: pointer;
       font-size: 20px;
+      margin: 0 2px;
+    }
+    .star.disabled {
+      cursor: not-allowed;
     }
     input[type="text"], select, button {
       margin: 5px 0;
@@ -60,6 +73,25 @@
     }
     button:hover {
       background-color: #0056b3;
+    }
+    progress {
+      width: 100%;
+      height: 20px;
+      margin: 10px 0;
+    }
+    .submenu {
+      margin-top: 15px;
+      padding: 10px;
+      border-top: 1px solid #ccc;
+    }
+    .word-color-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+    }
+    .word-color-item input {
+      flex: 1;
+      margin-right: 10px;
     }
   </style>
 </head>
@@ -96,6 +128,25 @@
       <option value="Comic Sans MS">Comic Sans</option>
       <option value="Open Sans">Open Sans</option>
     </select>
+
+    <div class="submenu">
+      <h3>Wort-Farb-Zuweisung</h3>
+      <div id="word-color-settings">
+        <div class="word-color-item">
+          <input type="text" class="word-input" placeholder="Wort eingeben">
+          <select class="color-select">
+            <option value="">Keine Farbe</option>
+            <option value="lightblue">Hellblau</option>
+            <option value="lightgreen">Hellgrün</option>
+            <option value="lightyellow">Hellgelb</option>
+            <option value="lightpink">Hellrosa</option>
+          </select>
+          <button onclick="addWordColor()">Hinzufügen</button>
+        </div>
+        <div id="word-color-list"></div>
+        <button onclick="clearWordColors()">Alle löschen</button>
+      </div>
+    </div>
 
     <label for="new-reward">Neue Belohnung hinzufügen:</label>
     <input type="text" id="new-reward" placeholder="Belohnung eingeben">
@@ -183,33 +234,33 @@
     <tbody>
       <tr>
         <td>2 Lernblöcke geschafft</td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
       </tr>
       <tr>
         <td>Pause gemacht</td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
       </tr>
       <tr>
         <td>Aufgabe ohne Hilfe</td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
-        <td><span class="star" onclick="toggleStar(this)">⭐</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
       </tr>
     </tbody>
   </table>
@@ -218,6 +269,7 @@
   <div id="weekly-reward"></div>
 
   <p>Fortschritt: <span id="star-count">0</span>/30 Sterne</p>
+  <progress id="star-progress" max="30" value="0"></progress>
 
   <h2>Belohnungen</h2>
   <div id="rewards"></div>
@@ -242,7 +294,7 @@
       document.getElementById('display-name').textContent = localStorage.getItem('name');
     }
 
-    // Hintergrundfarbe ändern
+    // Hintergrundfarbe ändern (ohne Tabelle)
     document.getElementById('background-color').addEventListener('change', function() {
       const color = this.value;
       document.body.style.backgroundColor = color;
@@ -280,33 +332,179 @@
       document.body.style.fontFamily = localStorage.getItem('fontFamily');
     }
 
-    // Sterne zählen und speichern
-    let starCount = parseInt(localStorage.getItem('starCount')) || 0;
-    document.getElementById('star-count').textContent = starCount;
-    const stars = document.querySelectorAll('.star');
-    stars.forEach(star => {
-      if (localStorage.getItem(star.id) === 'filled') {
-        star.textContent = '★';
+    // Wort-Farb-Zuweisung
+    let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
+    function renderWordColors() {
+      const wordColorList = document.getElementById('word-color-list');
+      wordColorList.innerHTML = '';
+      for (const [word, color] of Object.entries(wordColors)) {
+        const item = document.createElement('div');
+        item.className = 'word-color-item';
+        item.innerHTML = `
+          <span>${word}</span>
+          <select class="color-select" onchange="updateWordColor('${word}', this.value)">
+            <option value="">Keine Farbe</option>
+            <option value="lightblue" ${color === 'lightblue' ? 'selected' : ''}>Hellblau</option>
+            <option value="lightgreen" ${color === 'lightgreen' ? 'selected' : ''}>Hellgrün</option>
+            <option value="lightyellow" ${color === 'lightyellow' ? 'selected' : ''}>Hellgelb</option>
+            <option value="lightpink" ${color === 'lightpink' ? 'selected' : ''}>Hellrosa</option>
+          </select>
+          <button onclick="removeWordColor('${word}')">Löschen</button>
+        `;
+        wordColorList.appendChild(item);
+      }
+    }
+    renderWordColors();
+
+    window.addWordColor = function() {
+      const wordInput = document.querySelector('.word-input');
+      const colorSelect = document.querySelector('.color-select');
+      const word = wordInput.value.trim().toLowerCase();
+      const color = colorSelect.value;
+      if (word && color) {
+        wordColors[word] = color;
+        localStorage.setItem('wordColors', JSON.stringify(wordColors));
+        wordInput.value = '';
+        colorSelect.value = '';
+        renderWordColors();
+        applyWordColors();
+      }
+    };
+
+    window.updateWordColor = function(word, color) {
+      wordColors[word] = color;
+      localStorage.setItem('wordColors', JSON.stringify(wordColors));
+      applyWordColors();
+    };
+
+    window.removeWordColor = function(word) {
+      delete wordColors[word];
+      localStorage.setItem('wordColors', JSON.stringify(wordColors));
+      renderWordColors();
+      applyWordColors();
+    };
+
+    window.clearWordColors = function() {
+      wordColors = {};
+      localStorage.setItem('wordColors', JSON.stringify(wordColors));
+      renderWordColors();
+      applyWordColors();
+    };
+
+    // Farben basierend auf Wörtern anwenden
+    function applyWordColors() {
+      const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
+      weekPlanCells.forEach(cell => {
+        const text = cell.textContent.trim().toLowerCase();
+        let color = '';
+        for (const [word, assignedColor] of Object.entries(wordColors)) {
+          if (text.includes(word)) {
+            color = assignedColor;
+            break;
+          }
+        }
+        cell.style.backgroundColor = color;
+      });
+    }
+    applyWordColors();
+
+    // Wochenplan speichern
+    const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
+    weekPlanCells.forEach(cell => {
+      cell.addEventListener('input', () => {
+        localStorage.setItem(cell.id, cell.textContent);
+        applyWordColors();
+      });
+      if (localStorage.getItem(cell.id)) {
+        cell.textContent = localStorage.getItem(cell.id);
       }
     });
 
-    function toggleStar(star) {
-      if (star.textContent === '⭐') {
-        star.textContent = '★';
-        starCount++;
-        localStorage.setItem(star.id, 'filled');
-      } else {
-        star.textContent = '⭐';
-        starCount--;
-        localStorage.removeItem(star.id);
+    let cellId = 0;
+    weekPlanCells.forEach(cell => {
+      if (!cell.id) {
+        cell.id = `cell-${cellId++}`;
       }
-      document.getElementById('star-count').textContent = starCount;
+    });
+
+    // Sterne zählen und speichern
+    let starCount = parseInt(localStorage.getItem('starCount')) || 0;
+    const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
+
+    document.getElementById('star-count').textContent = starCount;
+    document.getElementById('star-progress').value = starCount;
+
+    // Initialisiere Sterne mit Event-Listener und Zustand
+    function initializeStars() {
+      stickerCells.forEach(cell => {
+        const goal = cell.parentNode.cells[0].textContent;
+        const dayIndex = cell.cellIndex;
+        let clickCount = parseInt(localStorage.getItem(`${goal}-${dayIndex}-clicks`)) || 0;
+
+        cell.innerHTML = '';
+        if (clickCount === 0) {
+          const star = document.createElement('span');
+          star.className = 'star';
+          star.textContent = '★';
+          star.onclick = function() { toggleStar(this); };
+          cell.appendChild(star);
+        } else if (clickCount === 1) {
+          const star = document.createElement('span');
+          star.className = 'star';
+          star.textContent = '⭐';
+          star.onclick = function() { toggleStar(this); };
+          cell.appendChild(star);
+        } else if (clickCount === 2) {
+          const star1 = document.createElement('span');
+          star1.className = 'star disabled';
+          star1.textContent = '⭐';
+          cell.appendChild(star1);
+
+          const star2 = document.createElement('span');
+          star2.className = 'star disabled';
+          star2.textContent = '⭐';
+          cell.appendChild(star2);
+        }
+      });
+    }
+    initializeStars();
+
+    function toggleStar(star) {
+      const cell = star.parentNode;
+      const goal = cell.parentNode.cells[0].textContent;
+      const dayIndex = cell.cellIndex;
+      let clickCount = parseInt(localStorage.getItem(`${goal}-${dayIndex}-clicks`)) || 0;
+
+      if (clickCount >= 2) {
+        return;
+      }
+
+      clickCount++;
+
+      if (clickCount === 1) {
+        starCount++;
+      } else if (clickCount === 2) {
+        starCount++;
+      }
+
+      localStorage.setItem(`${goal}-${dayIndex}-clicks`, clickCount);
       localStorage.setItem('starCount', starCount);
+
+      document.getElementById('star-count').textContent = starCount;
+      document.getElementById('star-progress').value = starCount;
+      initializeStars();
       updateWeeklyReward();
     }
 
     // Belohnungen verwalten
-    let rewards = JSON.parse(localStorage.getItem('rewards')) || [];
+    let rewards;
+    try {
+      rewards = JSON.parse(localStorage.getItem('rewards')) || [];
+    } catch (e) {
+      console.error('Fehler beim Parsen der Belohnungen aus localStorage:', e);
+      rewards = [];
+    }
+
     function renderRewards() {
       const rewardList = document.getElementById('reward-list');
       const rewardsDiv = document.getElementById('rewards');
@@ -331,6 +529,7 @@
         localStorage.setItem('rewards', JSON.stringify(rewards));
         renderRewards();
         document.getElementById('new-reward').value = '';
+        initializeStars();
       }
     };
 
@@ -341,16 +540,20 @@
       });
       localStorage.setItem('rewards', JSON.stringify(rewards));
       renderRewards();
+      initializeStars();
     };
 
     window.resetStars = function() {
-      stars.forEach(star => {
-        star.textContent = '⭐';
-        localStorage.removeItem(star.id);
+      stickerCells.forEach(cell => {
+        const goal = cell.parentNode.cells[0].textContent;
+        const dayIndex = cell.cellIndex;
+        localStorage.setItem(`${goal}-${dayIndex}-clicks`, '0');
       });
       starCount = 0;
-      document.getElementById('star-count').textContent = starCount;
       localStorage.setItem('starCount', starCount);
+      document.getElementById('star-count').textContent = starCount;
+      document.getElementById('star-progress').value = starCount;
+      initializeStars();
       updateWeeklyReward();
     };
 
@@ -358,43 +561,18 @@
       rewards = [];
       localStorage.setItem('rewards', JSON.stringify(rewards));
       renderRewards();
+      initializeStars();
     };
 
     function updateWeeklyReward() {
       const weeklyReward = document.getElementById('weekly-reward');
-      if (starCount >= 30 && rewards.length > 0) {
+      if (starCount >= 30 && rewards && rewards.length > 0) {
         weeklyReward.textContent = `Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}`;
       } else {
         weeklyReward.textContent = '';
       }
     }
     updateWeeklyReward();
-
-    // Wochenplan speichern
-    const cells = document.querySelectorAll('#week-plan td[contenteditable]');
-    cells.forEach(cell => {
-      cell.addEventListener('input', () => {
-        localStorage.setItem(cell.id, cell.textContent);
-      });
-      if (localStorage.getItem(cell.id)) {
-        cell.textContent = localStorage.getItem(cell.id);
-      }
-    });
-
-    // IDs für Speicherung hinzufügen
-    let cellId = 0;
-    cells.forEach(cell => {
-      if (!cell.id) {
-        cell.id = `cell-${cellId++}`;
-      }
-    });
-
-    let starId = 0;
-    stars.forEach(star => {
-      if (!star.id) {
-        star.id = `star-${starId++}`;
-      }
-    });
   </script>
 </body>
 </html>
