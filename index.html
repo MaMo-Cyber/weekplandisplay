@@ -32,6 +32,19 @@
       font-size: 24px;
       cursor: pointer;
     }
+    #back-button {
+      position: fixed;
+      top: 10px;
+      right: 50px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      cursor: pointer;
+    }
+    #back-button:hover {
+      background-color: #0056b3;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -97,6 +110,7 @@
 </head>
 <body>
   <div id="settings-button">⚙️</div>
+  <button id="back-button">Zurück</button>
 
   <div id="settings">
     <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -128,6 +142,9 @@
       <option value="Comic Sans MS">Comic Sans</option>
       <option value="Open Sans">Open Sans</option>
     </select>
+
+    <label for="back-link">Zurück-Link:</label>
+    <input type="text" id="back-link" placeholder="URL eingeben (z. B. https://example.com)">
 
     <div class="submenu">
       <h3>Wort-Farb-Zuweisung</h3>
@@ -292,6 +309,23 @@
     document.getElementById('close-settings').addEventListener('click', function() {
       document.getElementById('settings').style.display = 'none';
     });
+
+    // Zurück-Button mit Link
+    document.getElementById('back-button').addEventListener('click', function() {
+      const backLink = document.getElementById('back-link').value.trim();
+      if (backLink) {
+        window.open(backLink, '_blank');
+      }
+    });
+
+    // Zurück-Link speichern
+    document.getElementById('back-link').addEventListener('input', function() {
+      const link = this.value.trim();
+      localStorage.setItem('backLink', link);
+    });
+    if (localStorage.getItem('backLink')) {
+      document.getElementById('back-link').value = localStorage.getItem('backLink');
+    }
 
     // Name speichern und anzeigen
     document.getElementById('name').addEventListener('input', function() {
