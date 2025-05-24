@@ -9,9 +9,17 @@
       font-family: Arial, sans-serif;
       margin: 20px;
       background-color: #f0f0f0;
+      transition: background-color 0.3s;
+    }
+    body.dark-theme {
+      background-color: #333;
+      color: #f0f0f0;
     }
     h1, h2 {
       color: #333;
+    }
+    h1.dark-theme, h2.dark-theme {
+      color: #f0f0f0;
     }
     #settings {
       display: none;
@@ -25,12 +33,17 @@
       max-height: 80vh;
       overflow-y: auto;
     }
+    #settings.dark-theme {
+      background: #444;
+      border-color: #555;
+    }
     #settings-button {
       position: fixed;
       top: 10px;
       right: 10px;
       font-size: 24px;
       cursor: pointer;
+      z-index: 10;
     }
     #back-button {
       position: fixed;
@@ -41,6 +54,7 @@
       border: none;
       padding: 8px 16px;
       cursor: pointer;
+      z-index: 10;
     }
     #back-button:hover {
       background-color: #0056b3;
@@ -51,27 +65,53 @@
       margin: 20px 0;
       background-color: #fff;
     }
+    table.dark-theme {
+      background-color: #555;
+    }
     th, td {
       border: 1px solid #ccc;
       padding: 8px;
       text-align: center;
     }
+    th.dark-theme, td.dark-theme {
+      border-color: #777;
+      color: #f0f0f0;
+    }
     th {
       background-color: #ddd;
       border: 3px double #000;
+    }
+    th.dark-theme {
+      background-color: #666;
+      border-color: #000;
     }
     #week-plan td:first-child,
     #week-plan th:first-child {
       border: 3px double #000;
       background-color: #f9f9f9;
     }
+    #week-plan td:first-child.dark-theme,
+    #week-plan th:first-child.dark-theme {
+      background-color: #666;
+    }
     .star {
       cursor: pointer;
       font-size: 20px;
       margin: 0 2px;
+      animation: pulse 0.5s;
     }
     .star.disabled {
       cursor: not-allowed;
+    }
+    .star:hover::after {
+      content: "Klick 1x für 1 Stern, 2x für 2 Sterne";
+      position: absolute;
+      background: #333;
+      color: white;
+      padding: 5px;
+      border-radius: 3px;
+      font-size: 12px;
+      z-index: 10;
     }
     input[type="text"], select, button {
       margin: 5px 0;
@@ -92,10 +132,30 @@
       height: 20px;
       margin: 10px 0;
     }
+    progress[value] {
+      background-color: #eee;
+    }
+    progress[value]::-webkit-progress-bar {
+      background-color: #eee;
+    }
+    progress[value]::-webkit-progress-value {
+      background-color: #ffeb3b;
+    }
+    progress[value]::-moz-progress-bar {
+      background-color: #ffeb3b;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
     .submenu {
       margin-top: 15px;
       padding: 10px;
       border-top: 1px solid #ccc;
+    }
+    .submenu.dark-theme {
+      border-color: #777;
     }
     .word-color-item {
       display: flex;
@@ -105,6 +165,106 @@
     .word-color-item input {
       flex: 1;
       margin-right: 10px;
+    }
+    .delete-btn {
+      background-color: #dc3545;
+      padding: 2px 6px;
+      margin-left: 5px;
+      cursor: pointer;
+    }
+    .delete-btn:hover {
+      background-color: #c82333;
+    }
+    .undo-btn {
+      background-color: #28a745;
+      padding: 2px 4px;
+      margin-left: 2px;
+      font-size: 12px;
+      cursor: pointer;
+      display: none;
+    }
+    .undo-btn:hover {
+      background-color: #218838;
+    }
+    #error-message {
+      color: #dc3545;
+      display: none;
+      margin-top: 5px;
+    }
+    .read-aloud {
+      background-color: #007bff;
+      color: white;
+      padding: 5px 10px;
+      margin: 5px 0;
+      cursor: pointer;
+    }
+    .read-aloud:hover {
+      background-color: #0056b3;
+    }
+    .highlight {
+      background-color: yellow;
+      transition: background-color 0.5s;
+    }
+    #speech-controls {
+      margin: 10px 0;
+      display: flex;
+      gap: 10px;
+    }
+    #speech-speed {
+      padding: 5px;
+    }
+    #assistant-controls {
+      margin: 10px 0;
+      display: flex;
+      gap: 10px;
+    }
+    #assistant-output {
+      margin-top: 10px;
+      padding: 10px;
+      background-color: #e9ecef;
+      border-radius: 5px;
+      display: none;
+    }
+    #assistant-output.dark-theme {
+      background-color: #444;
+    }
+    /* Responsives Design */
+    @media (max-width: 600px) {
+      table {
+        font-size: 14px;
+      }
+      th, td {
+        padding: 4px;
+      }
+      #week-plan, #sticker-chart {
+        display: block;
+        overflow-x: auto;
+      }
+      #settings-button, #back-button {
+        top: 5px;
+        font-size: 18px;
+        padding: 5px 10px;
+      }
+      #settings {
+        width: 90%;
+        right: 5%;
+      }
+    }
+    /* Fortschrittsanzeige Farben */
+    @keyframes progressColor {
+      0% { background-color: #ffeb3b; }
+      50% { background-color: #ffc107; }
+      100% { background-color: #28a745; }
+    }
+    progress[value]::-webkit-progress-value {
+      animation: progressColor 1s infinite;
+      background-color: #ffeb3b;
+    }
+    progress[value][value="15"], progress[value][value="25"] {
+      background-color: #ffd700;
+    }
+    progress[value][value="30"] {
+      background-color: #28a745;
     }
   </style>
 </head>
@@ -143,8 +303,15 @@
       <option value="Open Sans">Open Sans</option>
     </select>
 
+    <label for="theme">Theme:</label>
+    <select id="theme">
+      <option value="light">Hell</option>
+      <option value="dark">Dunkel</option>
+    </select>
+
     <label for="back-link">Zurück-Link:</label>
     <input type="text" id="back-link" placeholder="URL eingeben (z. B. https://example.com)">
+    <div id="error-message"></div>
 
     <div class="submenu">
       <h3>Wort-Farb-Zuweisung</h3>
@@ -178,7 +345,24 @@
 
   <h1>Wochenplan für <span id="display-name">Name</span></h1>
 
+  <h2>KI-Assistent</h2>
+  <div id="assistant-controls">
+    <button onclick="startAssistant()">Assistent starten</button>
+    <button onclick="stopAssistant()">Assistent stoppen</button>
+  </div>
+  <div id="assistant-output"></div>
+
   <h2>Wochenplan</h2>
+  <button class="read-aloud" onclick="readSection('week-plan')">Wochenplan vorlesen</button>
+  <div id="speech-controls" style="display: none;">
+    <select id="speech-speed">
+      <option value="0.5">Langsam</option>
+      <option value="1" selected>Normal</option>
+      <option value="1.5">Schnell</option>
+      <option value="2">Sehr schnell</option>
+    </select>
+    <button onclick="stopSpeech()">Stopp</button>
+  </div>
   <table id="week-plan">
     <thead>
       <tr>
@@ -235,6 +419,7 @@
   </table>
 
   <h2>Stickerkarte</h2>
+  <button class="read-aloud" onclick="readSection('sticker-chart')">Stickerkarte vorlesen</button>
   <table id="sticker-chart">
     <thead>
       <tr>
@@ -250,44 +435,44 @@
     </thead>
     <tbody>
       <tr>
-        <td contenteditable="true"></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td contenteditable="true"><span class="delete-btn" onclick="deleteGoal(this)">X</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
       </tr>
       <tr>
-        <td contenteditable="true"></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td contenteditable="true"><span class="delete-btn" onclick="deleteGoal(this)">X</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
       </tr>
       <tr>
-        <td contenteditable="true"></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td contenteditable="true"><span class="delete-btn" onclick="deleteGoal(this)">X</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
       </tr>
       <tr>
-        <td contenteditable="true"></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
-        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span></td>
+        <td contenteditable="true"><span class="delete-btn" onclick="deleteGoal(this)">X</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
+        <td><span class="star" data-max="2" onclick="toggleStar(this)">★</span><span class="undo-btn" onclick="undoStar(this)">↺</span></td>
       </tr>
     </tbody>
   </table>
@@ -302,345 +487,711 @@
   <div id="rewards"></div>
 
   <script>
-    // Einstellungen öffnen/schließen
-    document.getElementById('settings-button').addEventListener('click', function() {
-      document.getElementById('settings').style.display = 'block';
-    });
-    document.getElementById('close-settings').addEventListener('click', function() {
-      document.getElementById('settings').style.display = 'none';
-    });
-
-    // Zurück-Button mit Link
-    document.getElementById('back-button').addEventListener('click', function() {
-      const backLink = document.getElementById('back-link').value.trim();
-      if (backLink) {
-        window.open(backLink, '_blank');
+    // DOM-Content geladen warten
+    document.addEventListener('DOMContentLoaded', function() {
+      // Einstellungen öffnen/schließen
+      const settingsButton = document.getElementById('settings-button');
+      const closeSettings = document.getElementById('close-settings');
+      const settings = document.getElementById('settings');
+      if (settingsButton && closeSettings && settings) {
+        settingsButton.addEventListener('click', function() {
+          settings.style.display = 'block';
+        });
+        closeSettings.addEventListener('click', function() {
+          settings.style.display = 'none';
+        });
       }
-    });
 
-    // Zurück-Link speichern
-    document.getElementById('back-link').addEventListener('input', function() {
-      const link = this.value.trim();
-      localStorage.setItem('backLink', link);
-    });
-    if (localStorage.getItem('backLink')) {
-      document.getElementById('back-link').value = localStorage.getItem('backLink');
-    }
+      // Zurück-Button mit Link
+      const backButton = document.getElementById('back-button');
+      const backLink = document.getElementById('back-link');
+      const errorMessage = document.getElementById('error-message');
+      if (backButton && backLink && errorMessage) {
+        backButton.addEventListener('click', function() {
+          const link = backLink.value.trim();
+          if (validateLink(link)) {
+            window.open(link, '_blank');
+            if (errorMessage) errorMessage.style.display = 'none';
+          } else {
+            if (errorMessage) {
+              errorMessage.textContent = 'Ungültiger Link! Bitte mit http:// oder https:// beginnen.';
+              errorMessage.style.display = 'block';
+            }
+          }
+        });
 
-    // Name speichern und anzeigen
-    document.getElementById('name').addEventListener('input', function() {
-      const name = this.value;
-      document.getElementById('display-name').textContent = name;
-      localStorage.setItem('name', name);
-    });
-    if (localStorage.getItem('name')) {
-      document.getElementById('name').value = localStorage.getItem('name');
-      document.getElementById('display-name').textContent = localStorage.getItem('name');
-    }
+        // Link-Validierung
+        function validateLink(link) {
+          return link && (link.startsWith('http://') || link.startsWith('https://'));
+        }
 
-    // Hintergrundfarbe ändern (ohne Tabelle)
-    document.getElementById('background-color').addEventListener('change', function() {
-      const color = this.value;
-      document.body.style.backgroundColor = color;
-      localStorage.setItem('backgroundColor', color);
-    });
-    if (localStorage.getItem('backgroundColor')) {
-      document.getElementById('background-color').value = localStorage.getItem('backgroundColor');
-      document.body.style.backgroundColor = localStorage.getItem('backgroundColor');
-    }
-
-    // Schriftgröße ändern
-    document.getElementById('font-size').addEventListener('change', function() {
-      const size = this.value;
-      if (size === 'small') document.body.style.fontSize = '12px';
-      if (size === 'medium') document.body.style.fontSize = '16px';
-      if (size === 'large') document.body.style.fontSize = '20px';
-      localStorage.setItem('fontSize', size);
-    });
-    if (localStorage.getItem('fontSize')) {
-      document.getElementById('font-size').value = localStorage.getItem('fontSize');
-      const size = localStorage.getItem('fontSize');
-      if (size === 'small') document.body.style.fontSize = '12px';
-      if (size === 'medium') document.body.style.fontSize = '16px';
-      if (size === 'large') document.body.style.fontSize = '20px';
-    }
-
-    // Schriftart ändern
-    document.getElementById('font-family').addEventListener('change', function() {
-      const font = this.value;
-      document.body.style.fontFamily = font;
-      localStorage.setItem('fontFamily', font);
-    });
-    if (localStorage.getItem('fontFamily')) {
-      document.getElementById('font-family').value = localStorage.getItem('fontFamily');
-      document.body.style.fontFamily = localStorage.getItem('fontFamily');
-    }
-
-    // Wort-Farb-Zuweisung
-    let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
-    function renderWordColors() {
-      const wordColorList = document.getElementById('word-color-list');
-      wordColorList.innerHTML = '';
-      for (const [word, color] of Object.entries(wordColors)) {
-        const item = document.createElement('div');
-        item.className = 'word-color-item';
-        item.innerHTML = `
-          <span>${word}</span>
-          <select class="color-select" onchange="updateWordColor('${word}', this.value)">
-            <option value="">Keine Farbe</option>
-            <option value="lightblue" ${color === 'lightblue' ? 'selected' : ''}>Hellblau</option>
-            <option value="lightgreen" ${color === 'lightgreen' ? 'selected' : ''}>Hellgrün</option>
-            <option value="lightyellow" ${color === 'lightyellow' ? 'selected' : ''}>Hellgelb</option>
-            <option value="lightpink" ${color === 'lightpink' ? 'selected' : ''}>Hellrosa</option>
-          </select>
-          <button onclick="removeWordColor('${word}')">Löschen</button>
-        `;
-        wordColorList.appendChild(item);
+        backLink.addEventListener('input', function() {
+          const link = this.value.trim();
+          localStorage.setItem('backLink', link);
+          if (errorMessage) {
+            if (!validateLink(link)) {
+              errorMessage.textContent = 'Ungültiger Link! Bitte mit http:// oder https:// beginnen.';
+              errorMessage.style.display = 'block';
+            } else {
+              errorMessage.style.display = 'none';
+            }
+          }
+        });
+        if (localStorage.getItem('backLink')) {
+          backLink.value = localStorage.getItem('backLink');
+        }
       }
-    }
-    renderWordColors();
 
-    window.addWordColor = function() {
-      const wordInput = document.querySelector('.word-input');
-      const colorSelect = document.querySelector('.color-select');
-      const word = wordInput.value.trim().toLowerCase();
-      const color = colorSelect.value;
-      if (word && color) {
+      // Theme umschalten
+      const themeSelect = document.getElementById('theme');
+      if (themeSelect) {
+        themeSelect.addEventListener('change', function() {
+          const theme = this.value;
+          document.body.className = theme === 'dark' ? 'dark-theme' : '';
+          document.querySelectorAll('table, #settings, th, td, #assistant-output').forEach(el => {
+            el.className = theme === 'dark' ? el.className + ' dark-theme' : el.className.replace(' dark-theme', '');
+          });
+          localStorage.setItem('theme', theme);
+        });
+        if (localStorage.getItem('theme')) {
+          themeSelect.value = localStorage.getItem('theme');
+          if (localStorage.getItem('theme') === 'dark') {
+            document.body.className = 'dark-theme';
+            document.querySelectorAll('table, #settings, th, td, #assistant-output').forEach(el => {
+              el.className += ' dark-theme';
+            });
+          }
+        }
+      }
+
+      // Name speichern und anzeigen
+      const nameInput = document.getElementById('name');
+      const displayName = document.getElementById('display-name');
+      if (nameInput && displayName) {
+        nameInput.addEventListener('input', function() {
+          const name = this.value;
+          displayName.textContent = name;
+          localStorage.setItem('name', name);
+        });
+        if (localStorage.getItem('name')) {
+          nameInput.value = localStorage.getItem('name');
+          displayName.textContent = localStorage.getItem('name');
+        }
+      }
+
+      // Hintergrundfarbe ändern
+      const backgroundColor = document.getElementById('background-color');
+      if (backgroundColor) {
+        backgroundColor.addEventListener('change', function() {
+          const color = this.value;
+          document.body.style.backgroundColor = color;
+          localStorage.setItem('backgroundColor', color);
+        });
+        if (localStorage.getItem('backgroundColor')) {
+          backgroundColor.value = localStorage.getItem('backgroundColor');
+          document.body.style.backgroundColor = localStorage.getItem('backgroundColor');
+        }
+      }
+
+      // Schriftgröße ändern
+      const fontSize = document.getElementById('font-size');
+      if (fontSize) {
+        fontSize.addEventListener('change', function() {
+          const size = this.value;
+          if (size === 'small') document.body.style.fontSize = '12px';
+          if (size === 'medium') document.body.style.fontSize = '16px';
+          if (size === 'large') document.body.style.fontSize = '20px';
+          localStorage.setItem('fontSize', size);
+        });
+        if (localStorage.getItem('fontSize')) {
+          fontSize.value = localStorage.getItem('fontSize');
+          const size = localStorage.getItem('fontSize');
+          if (size === 'small') document.body.style.fontSize = '12px';
+          if (size === 'medium') document.body.style.fontSize = '16px';
+          if (size === 'large') document.body.style.fontSize = '20px';
+        }
+      }
+
+      // Schriftart ändern
+      const fontFamily = document.getElementById('font-family');
+      if (fontFamily) {
+        fontFamily.addEventListener('change', function() {
+          const font = this.value;
+          document.body.style.fontFamily = font;
+          localStorage.setItem('fontFamily', font);
+        });
+        if (localStorage.getItem('fontFamily')) {
+          fontFamily.value = localStorage.getItem('fontFamily');
+          document.body.style.fontFamily = localStorage.getItem('fontFamily');
+        }
+      }
+
+      // Wort-Farb-Zuweisung
+      let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
+      function renderWordColors() {
+        const wordColorList = document.getElementById('word-color-list');
+        if (wordColorList) {
+          wordColorList.innerHTML = '';
+          for (const [word, color] of Object.entries(wordColors)) {
+            const item = document.createElement('div');
+            item.className = 'word-color-item';
+            item.innerHTML = `
+              <span>${word}</span>
+              <select class="color-select" onchange="updateWordColor('${word}', this.value)">
+                <option value="">Keine Farbe</option>
+                <option value="lightblue" ${color === 'lightblue' ? 'selected' : ''}>Hellblau</option>
+                <option value="lightgreen" ${color === 'lightgreen' ? 'selected' : ''}>Hellgrün</option>
+                <option value="lightyellow" ${color === 'lightyellow' ? 'selected' : ''}>Hellgelb</option>
+                <option value="lightpink" ${color === 'lightpink' ? 'selected' : ''}>Hellrosa</option>
+              </select>
+              <button onclick="removeWordColor('${word}')">Löschen</button>
+            `;
+            wordColorList.appendChild(item);
+          }
+        }
+      }
+      renderWordColors();
+
+      window.addWordColor = function() {
+        const wordInput = document.querySelector('.word-input');
+        const colorSelect = document.querySelector('.color-select');
+        if (wordInput && colorSelect) {
+          const word = wordInput.value.trim().toLowerCase();
+          const color = colorSelect.value;
+          if (word && color) {
+            wordColors[word] = color;
+            localStorage.setItem('wordColors', JSON.stringify(wordColors));
+            wordInput.value = '';
+            colorSelect.value = '';
+            renderWordColors();
+            applyWordColors();
+          }
+        }
+      };
+
+      window.updateWordColor = function(word, color) {
         wordColors[word] = color;
         localStorage.setItem('wordColors', JSON.stringify(wordColors));
-        wordInput.value = '';
-        colorSelect.value = '';
+        applyWordColors();
+      };
+
+      window.removeWordColor = function(word) {
+        delete wordColors[word];
+        localStorage.setItem('wordColors', JSON.stringify(wordColors));
         renderWordColors();
         applyWordColors();
+      };
+
+      window.clearWordColors = function() {
+        wordColors = {};
+        localStorage.setItem('wordColors', JSON.stringify(wordColors));
+        renderWordColors();
+        applyWordColors();
+      };
+
+      // Farben basierend auf Wörtern anwenden
+      function applyWordColors() {
+        const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
+        const stickerCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
+        if (weekPlanCells && stickerCells) {
+          weekPlanCells.forEach(cell => {
+            const text = cell.textContent.trim().toLowerCase();
+            let color = '';
+            for (const [word, assignedColor] of Object.entries(wordColors)) {
+              if (text.includes(word)) {
+                color = assignedColor;
+                break;
+              }
+            }
+            cell.style.backgroundColor = color;
+          });
+          stickerCells.forEach(cell => {
+            const text = cell.textContent.trim().toLowerCase();
+            let color = '';
+            for (const [word, assignedColor] of Object.entries(wordColors)) {
+              if (text.includes(word)) {
+                color = assignedColor;
+                break;
+              }
+            }
+            cell.style.backgroundColor = color;
+          });
+        }
       }
-    };
-
-    window.updateWordColor = function(word, color) {
-      wordColors[word] = color;
-      localStorage.setItem('wordColors', JSON.stringify(wordColors));
       applyWordColors();
-    };
 
-    window.removeWordColor = function(word) {
-      delete wordColors[word];
-      localStorage.setItem('wordColors', JSON.stringify(wordColors));
-      renderWordColors();
-      applyWordColors();
-    };
-
-    window.clearWordColors = function() {
-      wordColors = {};
-      localStorage.setItem('wordColors', JSON.stringify(wordColors));
-      renderWordColors();
-      applyWordColors();
-    };
-
-    // Farben basierend auf Wörtern anwenden
-    function applyWordColors() {
+      // Wochenplan speichern
       const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
-      const stickerCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
-      weekPlanCells.forEach(cell => {
-        const text = cell.textContent.trim().toLowerCase();
-        let color = '';
-        for (const [word, assignedColor] of Object.entries(wordColors)) {
-          if (text.includes(word)) {
-            color = assignedColor;
-            break;
+      if (weekPlanCells) {
+        weekPlanCells.forEach(cell => {
+          cell.addEventListener('input', () => {
+            localStorage.setItem(cell.id, cell.textContent);
+            applyWordColors();
+          });
+          if (localStorage.getItem(cell.id)) {
+            cell.textContent = localStorage.getItem(cell.id);
+          }
+        });
+
+        let cellId = 0;
+        weekPlanCells.forEach(cell => {
+          if (!cell.id) {
+            cell.id = `cell-${cellId++}`;
+          }
+        });
+      }
+
+      // Stickerkarte Ziele speichern und löschen
+      const stickerGoalCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
+      if (stickerGoalCells) {
+        stickerGoalCells.forEach(cell => {
+          cell.addEventListener('input', () => {
+            localStorage.setItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`, cell.textContent);
+            applyWordColors();
+          });
+          if (localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`)) {
+            cell.textContent = localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`);
+          }
+        });
+      }
+
+      window.deleteGoal = function(btn) {
+        const cell = btn.parentElement;
+        const rowIndex = cell.parentNode.rowIndex - 1;
+        if (cell) {
+          cell.textContent = '';
+          localStorage.setItem(`sticker-goal-${rowIndex}`, '');
+          applyWordColors();
+        }
+      };
+
+      // Sterne zählen und speichern
+      let starCount = parseInt(localStorage.getItem('starCount')) || 0;
+      const starCountDisplay = document.getElementById('star-count');
+      const starProgress = document.getElementById('star-progress');
+      if (starCountDisplay && starProgress) {
+        starCountDisplay.textContent = starCount;
+        starProgress.value = starCount;
+        updateProgressColor();
+      }
+
+      const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
+      if (stickerCells) {
+        // Initialisiere Sterne mit Event-Listener und Zustand
+        function initializeStars() {
+          stickerCells.forEach(cell => {
+            const rowIndex = cell.parentNode.rowIndex - 1;
+            const dayIndex = cell.cellIndex;
+            let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+            if (cell) {
+              // Entferne bestehende Sterne und Undo-Button
+              cell.innerHTML = '';
+
+              // Erstelle Stern(e) basierend auf clickCount
+              if (clickCount === 0) {
+                const star = document.createElement('span');
+                star.className = 'star';
+                star.textContent = '★';
+                star.onclick = function() { toggleStar(this); };
+                cell.appendChild(star);
+              } else if (clickCount === 1) {
+                const star = document.createElement('span');
+                star.className = 'star';
+                star.textContent = '⭐';
+                star.onclick = function() { toggleStar(this); };
+                cell.appendChild(star);
+              } else if (clickCount === 2) {
+                const star1 = document.createElement('span');
+                star1.className = 'star disabled';
+                star1.textContent = '⭐';
+                const star2 = document.createElement('span');
+                star2.className = 'star disabled';
+                star2.textContent = '⭐';
+                cell.appendChild(star1);
+                cell.appendChild(star2);
+              }
+
+              // Füge den Undo-Button hinzu
+              const undoBtn = document.createElement('span');
+              undoBtn.className = 'undo-btn';
+              undoBtn.textContent = '↺';
+              undoBtn.onclick = function() { undoStar(this); };
+              undoBtn.style.display = clickCount > 0 ? 'inline-block' : 'none';
+              cell.appendChild(undoBtn);
+            }
+          });
+        }
+        initializeStars();
+
+        function toggleStar(star) {
+          const cell = star.parentNode;
+          const rowIndex = cell.parentNode.rowIndex - 1;
+          const dayIndex = cell.cellIndex;
+          let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+          if (clickCount < 2) {
+            clickCount++;
+            if (clickCount === 1) {
+              starCount++;
+            } else if (clickCount === 2) {
+              starCount++;
+            }
+
+            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
+            localStorage.setItem('starCount', starCount);
+
+            if (starCountDisplay && starProgress) {
+              starCountDisplay.textContent = starCount;
+              starProgress.value = starCount;
+            }
+            initializeStars();
+            updateProgressColor();
+            updateWeeklyReward();
           }
         }
-        cell.style.backgroundColor = color;
-      });
-      stickerCells.forEach(cell => {
-        const text = cell.textContent.trim().toLowerCase();
-        let color = '';
-        for (const [word, assignedColor] of Object.entries(wordColors)) {
-          if (text.includes(word)) {
-            color = assignedColor;
-            break;
+
+        window.undoStar = function(btn) {
+          const cell = btn.parentNode;
+          const rowIndex = cell.parentNode.rowIndex - 1;
+          const dayIndex = cell.cellIndex;
+          let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+          if (clickCount > 0) {
+            clickCount--;
+            starCount--;
+
+            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
+            localStorage.setItem('starCount', starCount);
+
+            if (starCountDisplay && starProgress) {
+              starCountDisplay.textContent = starCount;
+              starProgress.value = starCount;
+            }
+            initializeStars();
+            updateProgressColor();
+            updateWeeklyReward();
+          }
+        };
+      }
+
+      // Fortschrittsanzeige Farbe aktualisieren
+      function updateProgressColor() {
+        if (starProgress) {
+          if (starCount >= 30) {
+            starProgress.style.backgroundColor = '#28a745';
+          } else if (starCount >= 15) {
+            starProgress.style.backgroundColor = '#ffd700';
+          } else {
+            starProgress.style.backgroundColor = '#ffeb3b';
           }
         }
-        cell.style.backgroundColor = color;
-      });
-    }
-    applyWordColors();
-
-    // Wochenplan speichern
-    const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
-    weekPlanCells.forEach(cell => {
-      cell.addEventListener('input', () => {
-        localStorage.setItem(cell.id, cell.textContent);
-        applyWordColors();
-      });
-      if (localStorage.getItem(cell.id)) {
-        cell.textContent = localStorage.getItem(cell.id);
       }
-    });
 
-    let cellId = 0;
-    weekPlanCells.forEach(cell => {
-      if (!cell.id) {
-        cell.id = `cell-${cellId++}`;
+      // Belohnungen verwalten
+      let rewards = [];
+      try {
+        rewards = JSON.parse(localStorage.getItem('rewards')) || [];
+      } catch (e) {
+        console.error('Fehler beim Parsen der Belohnungen aus localStorage:', e);
+        rewards = [];
       }
-    });
 
-    // Stickerkarte Ziele speichern
-    const stickerGoalCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
-    stickerGoalCells.forEach(cell => {
-      cell.addEventListener('input', () => {
-        localStorage.setItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`, cell.textContent);
-        applyWordColors();
-      });
-      if (localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`)) {
-        cell.textContent = localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`);
-      }
-    });
+      function renderRewards() {
+        const rewardList = document.getElementById('reward-list');
+        const rewardsDiv = document.getElementById('rewards');
+        if (rewardList && rewardsDiv) {
+          rewardList.innerHTML = '';
+          rewardsDiv.innerHTML = '';
+          rewards.forEach((reward, index) => {
+            const rewardItem = document.createElement('div');
+            rewardItem.innerHTML = `<input type="checkbox" id="reward-${index}" value="${reward}"> ${reward} <span class="delete-btn" onclick="deleteReward(${index})">X</span>`;
+            rewardList.appendChild(rewardItem);
 
-    // Sterne zählen und speichern
-    let starCount = parseInt(localStorage.getItem('starCount')) || 0;
-    const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
-
-    document.getElementById('star-count').textContent = starCount;
-    document.getElementById('star-progress').value = starCount;
-
-    // Initialisiere Sterne mit Event-Listener und Zustand
-    function initializeStars() {
-      stickerCells.forEach(cell => {
-        const rowIndex = cell.parentNode.rowIndex - 1; // Zeilenindex (0-basiert, -1 für thead)
-        const dayIndex = cell.cellIndex; // Spaltenindex
-        let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
-
-        cell.innerHTML = '';
-        if (clickCount === 0) {
-          const star = document.createElement('span');
-          star.className = 'star';
-          star.textContent = '★';
-          star.onclick = function() { toggleStar(this); };
-          cell.appendChild(star);
-        } else if (clickCount === 1) {
-          const star = document.createElement('span');
-          star.className = 'star';
-          star.textContent = '⭐';
-          star.onclick = function() { toggleStar(this); };
-          cell.appendChild(star);
-        } else if (clickCount === 2) {
-          const star1 = document.createElement('span');
-          star1.className = 'star disabled';
-          star1.textContent = '⭐';
-          cell.appendChild(star1);
-
-          const star2 = document.createElement('span');
-          star2.className = 'star disabled';
-          star2.textContent = '⭐';
-          cell.appendChild(star2);
+            const rewardDisplay = document.createElement('div');
+            rewardDisplay.textContent = reward;
+            rewardsDiv.appendChild(rewardDisplay);
+          });
         }
-      });
-    }
-    initializeStars();
+      }
+      renderRewards();
 
-    function toggleStar(star) {
-      const cell = star.parentNode;
-      const rowIndex = cell.parentNode.rowIndex - 1; // Zeilenindex (0-basiert, -1 für thead)
-      const dayIndex = cell.cellIndex; // Spaltenindex
-      let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+      window.addReward = function() {
+        const newReward = document.getElementById('new-reward');
+        if (newReward) {
+          const value = newReward.value;
+          if (value) {
+            rewards.push(value);
+            localStorage.setItem('rewards', JSON.stringify(rewards));
+            renderRewards();
+            newReward.value = '';
+            initializeStars();
+          }
+        }
+      };
 
-      if (clickCount >= 2) {
+      window.deleteReward = function(index) {
+        rewards.splice(index, 1);
+        localStorage.setItem('rewards', JSON.stringify(rewards));
+        renderRewards();
+        initializeStars();
+      };
+
+      window.deleteSelectedRewards = function() {
+        const rewardList = document.getElementById('reward-list');
+        if (rewardList) {
+          rewards = rewards.filter((_, index) => {
+            const checkbox = document.getElementById(`reward-${index}`);
+            return !checkbox || !checkbox.checked;
+          });
+          localStorage.setItem('rewards', JSON.stringify(rewards));
+          renderRewards();
+          initializeStars();
+        }
+      };
+
+      window.resetStars = function() {
+        if (stickerCells) {
+          stickerCells.forEach(cell => {
+            const rowIndex = cell.parentNode.rowIndex - 1;
+            const dayIndex = cell.cellIndex;
+            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, '0');
+          });
+          starCount = 0;
+          localStorage.setItem('starCount', starCount);
+          if (starCountDisplay && starProgress) {
+            starCountDisplay.textContent = starCount;
+            starProgress.value = starCount;
+          }
+          initializeStars(); // Aktualisiert die UI
+          updateProgressColor();
+          updateWeeklyReward();
+        }
+      };
+
+      window.resetRewards = function() {
+        rewards = [];
+        localStorage.setItem('rewards', JSON.stringify(rewards));
+        renderRewards();
+        initializeStars();
+      };
+
+      function updateWeeklyReward() {
+        const weeklyReward = document.getElementById('weekly-reward');
+        if (weeklyReward && starCount >= 30 && rewards && rewards.length > 0) {
+          weeklyReward.textContent = `Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}`;
+        } else if (weeklyReward) {
+          weeklyReward.textContent = '';
+        }
+      }
+      updateWeeklyReward();
+
+      // Sprachmodul für Vorlesen
+      let speechSynthesis = window.speechSynthesis;
+      let utterance = new SpeechSynthesisUtterance();
+      let isSpeaking = false;
+
+      window.readSection = function(sectionId) {
+        if (isSpeaking) {
+          speechSynthesis.cancel();
+          isSpeaking = false;
+        }
+
+        const table = document.getElementById(sectionId);
+        if (!table) return;
+
+        const speechSpeed = parseFloat(document.getElementById('speech-speed').value);
+        utterance.rate = speechSpeed;
+        utterance.lang = 'de-DE';
+
+        let textToRead = 'Start. ';
+        const cells = table.querySelectorAll('td[contenteditable]');
+        
+        if (sectionId === 'week-plan') {
+          const days = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+          const times = ['Morgens', 'Nachmittags', 'Abends'];
+          
+          cells.forEach((cell, index) => {
+            const rowIndex = Math.floor(index / 3);
+            const timeIndex = index % 3;
+            const day = days[rowIndex];
+            const time = times[timeIndex];
+            const cellText = cell.textContent.trim();
+            if (cellText) {
+              textToRead += `${day} ${time}, ${cellText}. `;
+            }
+          });
+          textToRead = textToRead.replace('Start. ', '');
+        } else {
+          cells.forEach(cell => {
+            textToRead += cell.textContent.trim() + '. ';
+          });
+        }
+
+        if (textToRead) {
+          utterance.text = textToRead;
+          utterance.onstart = () => {
+            isSpeaking = true;
+            document.getElementById('speech-controls').style.display = 'flex';
+            cells.forEach(cell => cell.classList.remove('highlight'));
+            let index = 0;
+            const interval = setInterval(() => {
+              if (index < cells.length) {
+                cells[index].classList.add('highlight');
+                index++;
+              } else {
+                clearInterval(interval);
+              }
+            }, 1000 * speechSpeed);
+          };
+          utterance.onend = () => {
+            isSpeaking = false;
+            cells.forEach(cell => cell.classList.remove('highlight'));
+            document.getElementById('speech-controls').style.display = 'none';
+          };
+          utterance.onerror = () => {
+            isSpeaking = false;
+            cells.forEach(cell => cell.classList.remove('highlight'));
+            document.getElementById('speech-controls').style.display = 'none';
+          };
+          speechSynthesis.speak(utterance);
+        }
+      };
+
+      window.stopSpeech = function() {
+        if (isSpeaking) {
+          speechSynthesis.cancel();
+          isSpeaking = false;
+          const cells = document.querySelectorAll('td[contenteditable]');
+          cells.forEach(cell => cell.classList.remove('highlight'));
+          document.getElementById('speech-controls').style.display = 'none';
+        }
+      };
+
+      // KI-Sprachassistent
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert('Dein Browser unterstützt die Spracherkennung nicht. Bitte verwende einen modernen Browser wie Chrome.');
         return;
       }
 
-      clickCount++;
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'de-DE';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
 
-      if (clickCount === 1) {
-        starCount++;
-      } else if (clickCount === 2) {
-        starCount++;
+      let isAssistantActive = false;
+      const assistantOutput = document.getElementById('assistant-output');
+
+      window.startAssistant = function() {
+        if (isAssistantActive) return;
+        isAssistantActive = true;
+        recognition.start();
+        assistantOutput.textContent = 'Assistent gestartet. Sprich jetzt...';
+        assistantOutput.style.display = 'block';
+      };
+
+      window.stopAssistant = function() {
+        if (!isAssistantActive) return;
+        isAssistantActive = false;
+        recognition.stop();
+        assistantOutput.textContent = 'Assistent gestoppt.';
+      };
+
+      recognition.onresult = function(event) {
+        const transcript = event.results[0][0].transcript.toLowerCase();
+        assistantOutput.textContent = `Du hast gesagt: ${transcript}`;
+        processAssistantCommand(transcript);
+        if (isAssistantActive) {
+          setTimeout(() => recognition.start(), 500); // Neustart der Erkennung
+        }
+      };
+
+      recognition.onend = function() {
+        if (isAssistantActive) {
+          setTimeout(() => recognition.start(), 500); // Neustart der Erkennung
+        } else {
+          assistantOutput.textContent = 'Assistent gestoppt.';
+        }
+      };
+
+      recognition.onerror = function(event) {
+        assistantOutput.textContent = 'Fehler bei der Spracherkennung: ' + event.error;
+        isAssistantActive = false;
+      };
+
+      function processAssistantCommand(command) {
+        const days = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag', 'sonntag'];
+        const times = ['morgens', 'nachmittags', 'abends'];
+        let response = '';
+
+        // Frage nach einem bestimmten Tag und Zeit
+        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
+          for (let timeIndex = 0; timeIndex < times.length; timeIndex++) {
+            if (command.includes(days[dayIndex]) && command.includes(times[timeIndex])) {
+              const cellIndex = dayIndex * 3 + timeIndex;
+              const cell = weekPlanCells[cellIndex];
+              const cellText = cell.textContent.trim();
+              if (cellText) {
+                response = `Am ${days[dayIndex]} ${times[timeIndex]} hast du: ${cellText}.`;
+              } else {
+                response = `Am ${days[dayIndex]} ${times[timeIndex]} hast du nichts eingetragen.`;
+              }
+              break;
+            }
+          }
+          if (response) break;
+        }
+
+        // Frage nach dem aktuellen Tag
+        if (command.includes('heute')) {
+          const today = new Date();
+          const dayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // Sonntag -> 6, Montag -> 0
+          const dayCells = weekPlanCells.slice(dayIndex * 3, (dayIndex + 1) * 3);
+          response = `Heute ist ${days[dayIndex]}. Dein Plan: `;
+          dayCells.forEach((cell, index) => {
+            const cellText = cell.textContent.trim();
+            if (cellText) {
+              response += `${times[index]}: ${cellText}. `;
+            }
+          });
+          if (response === `Heute ist ${days[dayIndex]}. Dein Plan: `) {
+            response += 'Du hast nichts eingetragen.';
+          }
+        }
+
+        // Frage nach Sternen
+        if (command.includes('wieviele sterne') || command.includes('wie viele sterne')) {
+          response = `Du hast aktuell ${starCount} von 30 Sternen.`;
+        }
+
+        // Frage nach Belohnungen
+        if (command.includes('belohnung') || command.includes('belohnungen')) {
+          if (rewards.length > 0) {
+            response = `Deine Belohnungen sind: ${rewards.join(', ')}.`;
+            if (starCount >= 30) {
+              response += ` Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}.`;
+            }
+          } else {
+            response = 'Du hast noch keine Belohnungen eingetragen.';
+          }
+        }
+
+        // Standardantwort, falls keine passende Frage
+        if (!response) {
+          response = 'Entschuldigung, das habe ich nicht verstanden. Du kannst nach deinem Wochenplan, Sternen oder Belohnungen fragen.';
+        }
+
+        // Antwort vorlesen
+        const utterance = new SpeechSynthesisUtterance(response);
+        utterance.lang = 'de-DE';
+        utterance.rate = parseFloat(document.getElementById('speech-speed').value);
+        speechSynthesis.speak(utterance);
+
+        // Antwort anzeigen
+        assistantOutput.textContent = response;
       }
-
-      localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
-      localStorage.setItem('starCount', starCount);
-
-      document.getElementById('star-count').textContent = starCount;
-      document.getElementById('star-progress').value = starCount;
-      initializeStars();
-      updateWeeklyReward();
-    }
-
-    // Belohnungen verwalten
-    let rewards;
-    try {
-      rewards = JSON.parse(localStorage.getItem('rewards')) || [];
-    } catch (e) {
-      console.error('Fehler beim Parsen der Belohnungen aus localStorage:', e);
-      rewards = [];
-    }
-
-    function renderRewards() {
-      const rewardList = document.getElementById('reward-list');
-      const rewardsDiv = document.getElementById('rewards');
-      rewardList.innerHTML = '';
-      rewardsDiv.innerHTML = '';
-      rewards.forEach((reward, index) => {
-        const rewardItem = document.createElement('div');
-        rewardItem.innerHTML = `<input type="checkbox" id="reward-${index}" value="${reward}"> ${reward}`;
-        rewardList.appendChild(rewardItem);
-
-        const rewardDisplay = document.createElement('div');
-        rewardDisplay.textContent = reward;
-        rewardsDiv.appendChild(rewardDisplay);
-      });
-    }
-    renderRewards();
-
-    window.addReward = function() {
-      const newReward = document.getElementById('new-reward').value;
-      if (newReward) {
-        rewards.push(newReward);
-        localStorage.setItem('rewards', JSON.stringify(rewards));
-        renderRewards();
-        document.getElementById('new-reward').value = '';
-        initializeStars();
-      }
-    };
-
-    window.deleteSelectedRewards = function() {
-      rewards = rewards.filter((_, index) => {
-        const checkbox = document.getElementById(`reward-${index}`);
-        return !checkbox.checked;
-      });
-      localStorage.setItem('rewards', JSON.stringify(rewards));
-      renderRewards();
-      initializeStars();
-    };
-
-    window.resetStars = function() {
-      stickerCells.forEach(cell => {
-        const rowIndex = cell.parentNode.rowIndex - 1;
-        const dayIndex = cell.cellIndex;
-        localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, '0');
-      });
-      starCount = 0;
-      localStorage.setItem('starCount', starCount);
-      document.getElementById('star-count').textContent = starCount;
-      document.getElementById('star-progress').value = starCount;
-      initializeStars();
-      updateWeeklyReward();
-    };
-
-    window.resetRewards = function() {
-      rewards = [];
-      localStorage.setItem('rewards', JSON.stringify(rewards));
-      renderRewards();
-      initializeStars();
-    };
-
-    function updateWeeklyReward() {
-      const weeklyReward = document.getElementById('weekly-reward');
-      if (starCount >= 30 && rewards && rewards.length > 0) {
-        weeklyReward.textContent = `Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}`;
-      } else {
-        weeklyReward.textContent = '';
-      }
-    }
-    updateWeeklyReward();
+    });
   </script>
 </body>
 </html>
