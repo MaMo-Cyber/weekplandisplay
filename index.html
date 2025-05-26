@@ -306,10 +306,16 @@
 
     <label for="background-color">Farbe auswählen (Hintergrund):</label>
     <select id="background-color">
-      <option value="blue">Blau</option>
-      <option value="green">Grün</option>
-      <option value="yellow">Gelb</option>
-      <option value="pink">Pink</option>
+      <option value="lightblue">Hellblau</option>
+      <option value="lightgreen">Hellgrün</option>
+      <option value="lightyellow">Hellgelb</option>
+      <option value="lightpink">Hellrosa</option>
+      <option value="lightpurple">Hellviolett</option>
+      <option value="lightorange">Hellorange</option>
+      <option value="lightgray">Hellgrau</option>
+      <option value="mintgreen">Mintgrün</option>
+      <option value="peach">Pfirsich</option>
+      <option value="skyblue">Himmelblau</option>
     </select>
 
     <label for="font-size">Schriftgröße:</label>
@@ -347,6 +353,12 @@
             <option value="lightgreen">Hellgrün</option>
             <option value="lightyellow">Hellgelb</option>
             <option value="lightpink">Hellrosa</option>
+            <option value="lightpurple">Hellviolett</option>
+            <option value="lightorange">Hellorange</option>
+            <option value="lightgray">Hellgrau</option>
+            <option value="mintgreen">Mintgrün</option>
+            <option value="peach">Pfirsich</option>
+            <option value="skyblue">Himmelblau</option>
           </select>
           <button onclick="addWordColor()">Hinzufügen</button>
         </div>
@@ -366,12 +378,16 @@
     <button onclick="deleteSelectedRewards()">Ausgewählte Belohnungen löschen</button>
     <button onclick="resetStars()">Sterne zurücksetzen</button>
     <button onclick="resetRewards()">Alle Belohnungen zurücksetzen</button>
+    <button onclick="clearWeekPlan()">Wochenplan löschen</button>
+    <label for="custom-error-text">Fehlermeldung bei ungenügenden Sternen:</label>
+    <input type="text" id="custom-error-text" placeholder="Benutzerdefinierter Text">
+    <button onclick="saveCustomErrorText()">Speichern</button>
   </div>
 
   <!-- Modal für Fehlermeldung -->
   <div id="star-error-modal">
     <div id="star-error-message">
-      <p>Leider hast du nicht genug Sterne gesamt. Mach weiter und du wirst es noch schaffen.</p>
+      <p id="star-error-text">Leider hast du nicht genug Sterne gesamt. Mach weiter und du wirst es noch schaffen.</p>
       <button onclick="closeStarErrorModal()">OK</button>
     </div>
   </div>
@@ -508,6 +524,7 @@
 
   <p>Fortschritt: <span id="star-count">0</span>/<span id="max-stars">0</span> Sterne</p>
   <progress id="star-progress" max="0" value="0"></progress>
+  <p>Eingelöste Sterne: <span id="claimed-star-count">0</span></p>
 
   <h2>Belohnungen</h2>
   <div id="rewards"></div>
@@ -515,7 +532,9 @@
   <script>
     // Globale Variablen
     let starCount = parseInt(localStorage.getItem('starCount')) || 0;
+    let claimedStarCount = parseInt(localStorage.getItem('claimedStarCount')) || 0;
     const starCountDisplay = document.getElementById('star-count');
+    const claimedStarCountDisplay = document.getElementById('claimed-star-count');
     const starProgress = document.getElementById('star-progress');
     let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
     let claimedRewards = JSON.parse(localStorage.getItem('claimedRewards')) || [];
@@ -549,7 +568,10 @@
           let color = '';
           for (const [word, assignedColor] of Object.entries(wordColors)) {
             if (text.includes(word)) {
-              color = assignedColor;
+              if (assignedColor === 'mintgreen') color = '#98FF98';
+              else if (assignedColor === 'peach') color = '#FFDAB9';
+              else if (assignedColor === 'skyblue') color = '#87CEEB';
+              else color = assignedColor;
               break;
             }
           }
@@ -560,7 +582,10 @@
           let color = '';
           for (const [word, assignedColor] of Object.entries(wordColors)) {
             if (text.includes(word)) {
-              color = assignedColor;
+              if (assignedColor === 'mintgreen') color = '#98FF98';
+              else if (assignedColor === 'peach') color = '#FFDAB9';
+              else if (assignedColor === 'skyblue') color = '#87CEEB';
+              else color = assignedColor;
               break;
             }
           }
@@ -721,10 +746,12 @@
     // Funktion zum Anzeigen des Fehlermodals
     window.showStarErrorModal = function() {
       const modal = document.getElementById('star-error-modal');
-      const message = document.getElementById('star-error-message');
+      const message = document.getElementById('star-error-text');
       if (modal && message) {
+        const customText = localStorage.getItem('customErrorText') || 'Leider hast du nicht genug Sterne gesamt. Mach weiter und du wirst es noch schaffen.';
+        message.textContent = customText;
         const theme = document.body.className.includes('dark-theme') ? 'dark-theme' : '';
-        message.className = theme;
+        document.getElementById('star-error-message').className = theme;
         modal.style.display = 'block';
       }
     };
@@ -737,18 +764,37 @@
       }
     };
 
+    // Funktion zum Speichern des benutzerdefinierten Fehlermeldungstextes
+    window.saveCustomErrorText = function() {
+      const customErrorText = document.getElementById('custom-error-text').value.trim();
+      if (customErrorText) {
+        localStorage.setItem('customErrorText', customErrorText);
+        document.getElementById('custom-error-text').value = '';
+      }
+    };
+
     // Funktion zum Einlösen einer Belohnung
     window.claimReward = function(index, checkbox) {
-      // Strengere Validierung des Index
       if (!Number.isInteger(index) || index < 0 || index >= rewards.length || !rewards[index]) {
         console.error('Invalid reward index:', index, 'Rewards:', rewards);
         if (checkbox) checkbox.checked = false;
         return;
       }
       const rewardStars = rewards[index].stars;
-      if (starCount < rewardStars) {
+
+      // Berechne die Anzahl der bereits verbrauchten Sterne
+      let usedStarsCount = 0;
+      for (let key in usedStars) {
+        if (usedStars[key]) usedStarsCount++;
+      }
+
+      // Berechne verfügbare Sterne (gesamt minus verbrauchte)
+      const availableStars = starCount - usedStarsCount;
+
+      // Prüfe, ob genug verfügbare Sterne vorhanden sind
+      if (availableStars < rewardStars) {
         showStarErrorModal();
-        if (checkbox) checkbox.checked = false; // Checkbox zurücksetzen
+        if (checkbox) checkbox.checked = false;
         return;
       }
 
@@ -756,38 +802,34 @@
       claimedRewards[index] = true;
       localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
 
-      // Sterne abziehen
-      starCount -= rewardStars;
-      if (starCount < 0) starCount = 0;
-      localStorage.setItem('starCount', starCount);
-
-      // Markiere die genutzten Sterne, ohne sie zu reduzieren
+      // Markiere Sterne als verbraucht
       const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
-      let starsUsed = 0;
-      for (let i = 0; i < stickerCells.length && starsUsed < rewardStars; i++) {
+      let starsToUse = rewardStars;
+      for (let i = 0; i < stickerCells.length && starsToUse > 0; i++) {
         const cell = stickerCells[i];
         const rowIndex = cell.parentNode.rowIndex - 1;
         const dayIndex = cell.cellIndex;
-        const stars = cell.querySelectorAll('.star');
-        for (let star of stars) {
-          if (!star.classList.contains('used') && starsUsed < rewardStars) {
-            const key = `${rowIndex}-${dayIndex}`;
+        const key = `${rowIndex}-${dayIndex}`;
+        if (!usedStars[key] && cell.querySelector('.star') && starsToUse > 0) {
+          const stars = cell.querySelectorAll('.star');
+          const clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+          if (clickCount > 0) {
             usedStars[key] = true;
-            star.classList.add('used');
-            starsUsed++;
-            if (starsUsed >= rewardStars) break;
+            stars.forEach(star => star.classList.add('used'));
+            starsToUse -= clickCount;
+            claimedStarCount += clickCount;
           }
         }
       }
-      localStorage.setItem('usedStars', JSON.stringify(usedStars));
 
-      // UI aktualisieren
-      if (starCountDisplay && starProgress) {
-        starCountDisplay.textContent = starCount;
-        starProgress.value = starCount;
+      localStorage.setItem('usedStars', JSON.stringify(usedStars));
+      localStorage.setItem('claimedStarCount', claimedStarCount);
+
+      // Aktualisiere UI
+      if (claimedStarCountDisplay) {
+        claimedStarCountDisplay.textContent = claimedStarCount;
       }
       initializeStars();
-      updateProgressColor();
       updateWeeklyReward();
       window.renderRewards();
     };
@@ -797,7 +839,6 @@
       const rewardList = document.getElementById('reward-list');
       const rewardsDiv = document.getElementById('rewards');
       if (rewardList && rewardsDiv) {
-        // Einstellungen: Liste der Belohnungen mit Checkboxen zum Löschen
         rewardList.innerHTML = '';
         rewards.forEach((reward, index) => {
           const rewardItem = document.createElement('div');
@@ -805,8 +846,7 @@
           rewardList.appendChild(rewardItem);
         });
 
-        // Belohnungen-Anzeige: Mit Checkboxen zum Einlösen
-        rewardsDiv.innerHTML = ''; // Vollständig leeren, um alte Elemente zu entfernen
+        rewardsDiv.innerHTML = '';
         rewards.forEach((reward, index) => {
           const rewardDisplay = document.createElement('div');
           const isClaimed = claimedRewards[index] === true;
@@ -833,7 +873,7 @@
         const stars = parseInt(rewardStars.value);
         if (name && stars >= 1) {
           rewards.push({ name, stars });
-          claimedRewards.push(false); // Neue Belohnung ist nicht eingelöst
+          claimedRewards.push(false);
           localStorage.setItem('rewards', JSON.stringify(rewards));
           localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
           window.renderRewards();
@@ -884,13 +924,16 @@
         });
         starCount = 0;
         usedStars = {};
+        claimedStarCount = 0;
         localStorage.setItem('starCount', starCount);
         localStorage.setItem('usedStars', JSON.stringify(usedStars));
-        if (starCountDisplay && starProgress) {
+        localStorage.setItem('claimedStarCount', claimedStarCount);
+        if (starCountDisplay && starProgress && claimedStarCountDisplay) {
           starCountDisplay.textContent = starCount;
           starProgress.value = starCount;
+          claimedStarCountDisplay.textContent = claimedStarCount;
         }
-        initializeStars(); // Aktualisiert die UI
+        initializeStars();
         updateProgressColor();
         updateWeeklyReward();
       }
@@ -905,9 +948,17 @@
       initializeStars();
     };
 
-    // DOM-Content geladen warten
+    window.clearWeekPlan = function() {
+      const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
+      if (weekPlanCells) {
+        weekPlanCells.forEach(cell => {
+          cell.textContent = '';
+          localStorage.removeItem(cell.id);
+        });
+      }
+    };
+
     document.addEventListener('DOMContentLoaded', function() {
-      // Einstellungen öffnen/schließen
       const settingsButton = document.getElementById('settings-button');
       const closeSettings = document.getElementById('close-settings');
       const settings = document.getElementById('settings');
@@ -920,7 +971,6 @@
         });
       }
 
-      // Zurück-Button mit Link
       const backButton = document.getElementById('back-button');
       const backLink = document.getElementById('back-link');
       const errorMessage = document.getElementById('error-message');
@@ -938,7 +988,6 @@
           }
         });
 
-        // Link-Validierung
         function validateLink(link) {
           return link && (link.startsWith('http://') || link.startsWith('https://'));
         }
@@ -960,7 +1009,6 @@
         }
       }
 
-      // Theme umschalten
       const themeSelect = document.getElementById('theme');
       if (themeSelect) {
         themeSelect.addEventListener('change', function() {
@@ -982,7 +1030,6 @@
         }
       }
 
-      // Name speichern und anzeigen
       const nameInput = document.getElementById('name');
       const displayName = document.getElementById('display-name');
       if (nameInput && displayName) {
@@ -997,21 +1044,26 @@
         }
       }
 
-      // Hintergrundfarbe ändern
       const backgroundColor = document.getElementById('background-color');
       if (backgroundColor) {
         backgroundColor.addEventListener('change', function() {
-          const color = this.value;
+          let color = this.value;
+          if (color === 'mintgreen') color = '#98FF98';
+          else if (color === 'peach') color = '#FFDAB9';
+          else if (color === 'skyblue') color = '#87CEEB';
           document.body.style.backgroundColor = color;
-          localStorage.setItem('backgroundColor', color);
+          localStorage.setItem('backgroundColor', this.value);
         });
         if (localStorage.getItem('backgroundColor')) {
           backgroundColor.value = localStorage.getItem('backgroundColor');
-          document.body.style.backgroundColor = localStorage.getItem('backgroundColor');
+          let color = localStorage.getItem('backgroundColor');
+          if (color === 'mintgreen') color = '#98FF98';
+          else if (color === 'peach') color = '#FFDAB9';
+          else if (color === 'skyblue') color = '#87CEEB';
+          document.body.style.backgroundColor = color;
         }
       }
 
-      // Schriftgröße ändern
       const fontSize = document.getElementById('font-size');
       if (fontSize) {
         fontSize.addEventListener('change', function() {
@@ -1030,7 +1082,6 @@
         }
       }
 
-      // Schriftart ändern
       const fontFamily = document.getElementById('font-family');
       if (fontFamily) {
         fontFamily.addEventListener('change', function() {
@@ -1044,7 +1095,6 @@
         }
       }
 
-      // Wort-Farb-Zuweisung
       function renderWordColors() {
         const wordColorList = document.getElementById('word-color-list');
         if (wordColorList) {
@@ -1060,6 +1110,12 @@
                 <option value="lightgreen" ${color === 'lightgreen' ? 'selected' : ''}>Hellgrün</option>
                 <option value="lightyellow" ${color === 'lightyellow' ? 'selected' : ''}>Hellgelb</option>
                 <option value="lightpink" ${color === 'lightpink' ? 'selected' : ''}>Hellrosa</option>
+                <option value="lightpurple" ${color === 'lightpurple' ? 'selected' : ''}>Hellviolett</option>
+                <option value="lightorange" ${color === 'lightorange' ? 'selected' : ''}>Hellorange</option>
+                <option value="lightgray" ${color === 'lightgray' ? 'selected' : ''}>Hellgrau</option>
+                <option value="mintgreen" ${color === 'mintgreen' ? 'selected' : ''}>Mintgrün</option>
+                <option value="peach" ${color === 'peach' ? 'selected' : ''}>Pfirsich</option>
+                <option value="skyblue" ${color === 'skyblue' ? 'selected' : ''}>Himmelblau</option>
               </select>
               <button onclick="removeWordColor('${word}')">Löschen</button>
             `;
@@ -1106,31 +1162,23 @@
         applyWordColors();
       };
 
-      // Initiales Anwenden der Wortfarben
       applyWordColors();
 
-      // Wochenplan speichern
       const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
       if (weekPlanCells) {
         weekPlanCells.forEach(cell => {
+          const cellId = cell.id || `cell-${cell.parentNode.rowIndex}-${cell.cellIndex}`;
+          cell.id = cellId;
           cell.addEventListener('input', () => {
-            localStorage.setItem(cell.id, cell.textContent);
+            localStorage.setItem(cellId, cell.textContent);
             applyWordColors();
           });
-          if (localStorage.getItem(cell.id)) {
-            cell.textContent = localStorage.getItem(cell.id);
-          }
-        });
-
-        let cellId = 0;
-        weekPlanCells.forEach(cell => {
-          if (!cell.id) {
-            cell.id = `cell-${cellId++}`;
+          if (localStorage.getItem(cellId)) {
+            cell.textContent = localStorage.getItem(cellId);
           }
         });
       }
 
-      // Stickerkarte Ziele speichern
       const stickerGoalCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
       if (stickerGoalCells) {
         stickerGoalCells.forEach(cell => {
@@ -1146,19 +1194,17 @@
         });
       }
 
-      // Initiale Berechnung der maximalen Sterne
       updateMaxStars();
 
-      // Sterne zählen und speichern
-      if (starCountDisplay && starProgress) {
+      if (starCountDisplay && starProgress && claimedStarCountDisplay) {
         starCountDisplay.textContent = starCount;
         starProgress.value = starCount;
+        claimedStarCountDisplay.textContent = claimedStarCount;
         updateProgressColor();
       }
 
       initializeStars();
 
-      // Belohnungen verwalten
       try {
         const storedRewards = JSON.parse(localStorage.getItem('rewards')) || [];
         if (Array.isArray(storedRewards)) {
@@ -1172,7 +1218,6 @@
         rewards = [];
       }
 
-      // Synchronisiere claimedRewards mit der Länge von rewards
       claimedRewards = Array(rewards.length).fill(false);
       const storedClaimedRewards = JSON.parse(localStorage.getItem('claimedRewards')) || [];
       for (let i = 0; i < Math.min(storedClaimedRewards.length, rewards.length); i++) {
@@ -1182,26 +1227,23 @@
 
       window.renderRewards();
 
-      // Event delegation für Belohnungen-Div
       const rewardsDiv = document.getElementById('rewards');
       if (rewardsDiv) {
         rewardsDiv.addEventListener('change', function(e) {
           const checkbox = e.target;
           if (checkbox.type === 'checkbox' && checkbox.id.startsWith('claim-reward-')) {
             const index = parseInt(checkbox.id.split('-')[2], 10);
-            // Prüfen, ob der Index noch gültig ist
             if (index >= 0 && index < rewards.length) {
               claimReward(index, checkbox);
             } else {
               console.warn('Index out of bounds during event handling:', index, 'Rewards length:', rewards.length);
-              checkbox.checked = false; // Zurücksetzen
-              window.renderRewards(); // Neu rendern, um Konsistenz sicherzustellen
+              checkbox.checked = false;
+              window.renderRewards();
             }
           }
         });
       }
 
-      // Sprachmodul für Vorlesen
       let speechSynthesis = window.speechSynthesis;
       let utterance = new SpeechSynthesisUtterance();
       let isSpeaking = false;
