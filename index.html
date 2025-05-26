@@ -103,6 +103,11 @@
     .star.disabled {
       cursor: not-allowed;
     }
+    .star.used {
+      text-decoration: line-through;
+      color: #888;
+      cursor: not-allowed;
+    }
     .star:hover::after {
       content: "Klick 1x für 1 Stern, 2x für 2 Sterne";
       position: absolute;
@@ -113,9 +118,12 @@
       font-size: 12px;
       z-index: 10;
     }
-    input[type="text"], select, button {
+    input[type="text"], input[type="number"], select, button {
       margin: 5px 0;
       padding: 5px;
+    }
+    input[type="number"] {
+      width: 60px;
     }
     button {
       background-color: #007bff;
@@ -213,21 +221,6 @@
     #speech-speed {
       padding: 5px;
     }
-    #assistant-controls {
-      margin: 10px 0;
-      display: flex;
-      gap: 10px;
-    }
-    #assistant-output {
-      margin-top: 10px;
-      padding: 10px;
-      background-color: #e9ecef;
-      border-radius: 5px;
-      display: none;
-    }
-    #assistant-output.dark-theme {
-      background-color: #444;
-    }
     /* Responsives Design */
     @media (max-width: 600px) {
       table {
@@ -265,6 +258,36 @@
     }
     progress[value][value="30"] {
       background-color: #28a745;
+    }
+    /* Modal für Fehlermeldung */
+    #star-error-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+    }
+    #star-error-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 5px;
+      text-align: center;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    }
+    #star-error-message.dark-theme {
+      background: #444;
+      color: #f0f0f0;
+    }
+    .claimed {
+      text-decoration: line-through;
+      color: #888;
     }
   </style>
 </head>
@@ -334,6 +357,8 @@
 
     <label for="new-reward">Neue Belohnung hinzufügen:</label>
     <input type="text" id="new-reward" placeholder="Belohnung eingeben">
+    <label for="reward-stars">Sterne benötigt:</label>
+    <input type="number" id="reward-stars" min="1" value="1">
     <button onclick="addReward()">Hinzufügen</button>
 
     <label>Belohnungen löschen:</label>
@@ -343,14 +368,15 @@
     <button onclick="resetRewards()">Alle Belohnungen zurücksetzen</button>
   </div>
 
-  <h1>Wochenplan für <span id="display-name">Name</span></h1>
-
-  <h2>KI-Assistent</h2>
-  <div id="assistant-controls">
-    <button onclick="startAssistant()">Assistent starten</button>
-    <button onclick="stopAssistant()">Assistent stoppen</button>
+  <!-- Modal für Fehlermeldung -->
+  <div id="star-error-modal">
+    <div id="star-error-message">
+      <p>Leider hast du nicht genug Sterne gesamt. Mach weiter und du wirst es noch schaffen.</p>
+      <button onclick="closeStarErrorModal()">OK</button>
+    </div>
   </div>
-  <div id="assistant-output"></div>
+
+  <h1>Wochenplan für <span id="display-name">Name</span></h1>
 
   <h2>Wochenplan</h2>
   <button class="read-aloud" onclick="readSection('week-plan')">Wochenplan vorlesen</button>
@@ -480,13 +506,405 @@
   <h2>Wochenbelohnung</h2>
   <div id="weekly-reward"></div>
 
-  <p>Fortschritt: <span id="star-count">0</span>/30 Sterne</p>
-  <progress id="star-progress" max="30" value="0"></progress>
+  <p>Fortschritt: <span id="star-count">0</span>/<span id="max-stars">0</span> Sterne</p>
+  <progress id="star-progress" max="0" value="0"></progress>
 
   <h2>Belohnungen</h2>
   <div id="rewards"></div>
 
   <script>
+    // Globale Variablen
+    let starCount = parseInt(localStorage.getItem('starCount')) || 0;
+    const starCountDisplay = document.getElementById('star-count');
+    const starProgress = document.getElementById('star-progress');
+    let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
+    let claimedRewards = JSON.parse(localStorage.getItem('claimedRewards')) || [];
+    let rewards = [];
+    let usedStars = JSON.parse(localStorage.getItem('usedStars')) || {};
+
+    window.updateMaxStars = function() {
+      const stickerGoalCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
+      let filledGoals = 0;
+      stickerGoalCells.forEach(cell => {
+        if (cell.textContent.trim()) {
+          filledGoals++;
+        }
+      });
+      const maxStars = filledGoals * 14; // 2 Sterne pro Tag, 7 Tage pro Ziel
+      const maxStarsDisplay = document.getElementById('max-stars');
+      const starProgress = document.getElementById('star-progress');
+      if (maxStarsDisplay && starProgress) {
+        maxStarsDisplay.textContent = maxStars;
+        starProgress.setAttribute('max', maxStars);
+      }
+      return maxStars;
+    };
+
+    window.applyWordColors = function() {
+      const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
+      const stickerCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
+      if (weekPlanCells && stickerCells) {
+        weekPlanCells.forEach(cell => {
+          const text = cell.textContent.trim().toLowerCase();
+          let color = '';
+          for (const [word, assignedColor] of Object.entries(wordColors)) {
+            if (text.includes(word)) {
+              color = assignedColor;
+              break;
+            }
+          }
+          cell.style.backgroundColor = color;
+        });
+        stickerCells.forEach(cell => {
+          const text = cell.textContent.trim().toLowerCase();
+          let color = '';
+          for (const [word, assignedColor] of Object.entries(wordColors)) {
+            if (text.includes(word)) {
+              color = assignedColor;
+              break;
+            }
+          }
+          cell.style.backgroundColor = color;
+        });
+      }
+      updateMaxStars(); // Aktualisiere maxStars nach dem Anwenden der Farben
+    };
+
+    window.toggleStar = function(star) {
+      const cell = star.parentNode;
+      const rowIndex = cell.parentNode.rowIndex - 1;
+      const dayIndex = cell.cellIndex;
+      let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+      if (clickCount < 2 && !star.classList.contains('used')) {
+        clickCount++;
+        if (clickCount === 1) {
+          starCount++;
+        } else if (clickCount === 2) {
+          starCount++;
+        }
+
+        localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
+        localStorage.setItem('starCount', starCount);
+
+        if (starCountDisplay && starProgress) {
+          starCountDisplay.textContent = starCount;
+          starProgress.value = starCount;
+        }
+        initializeStars();
+        updateProgressColor();
+        updateWeeklyReward();
+      }
+    };
+
+    window.undoStar = function(btn) {
+      const cell = btn.parentNode;
+      const rowIndex = cell.parentNode.rowIndex - 1;
+      const dayIndex = cell.cellIndex;
+      let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+      if (clickCount > 0 && !usedStars[`${rowIndex}-${dayIndex}`]) {
+        clickCount--;
+        starCount--;
+
+        localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
+        localStorage.setItem('starCount', starCount);
+
+        if (starCountDisplay && starProgress) {
+          starCountDisplay.textContent = starCount;
+          starProgress.value = starCount;
+        }
+        initializeStars();
+        updateProgressColor();
+        updateWeeklyReward();
+      }
+    };
+
+    window.deleteGoal = function(btn) {
+      const cell = btn.parentElement;
+      const rowIndex = cell.parentNode.rowIndex - 1;
+      if (cell) {
+        cell.textContent = '';
+        localStorage.setItem(`sticker-goal-${rowIndex}`, '');
+        applyWordColors();
+        updateMaxStars();
+        updateWeeklyReward();
+        // Füge den Delete-Button wieder hinzu
+        const deleteBtn = document.createElement('span');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.textContent = 'X';
+        deleteBtn.onclick = function() { deleteGoal(this); };
+        cell.appendChild(deleteBtn);
+      }
+    };
+
+    window.updateWeeklyReward = function() {
+      const weeklyReward = document.getElementById('weekly-reward');
+      const maxStars = parseInt(document.getElementById('max-stars').textContent) || 0;
+      if (weeklyReward && starCount >= maxStars && rewards && rewards.length > 0 && maxStars > 0) {
+        weeklyReward.textContent = `Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0].name}`;
+      } else if (weeklyReward) {
+        weeklyReward.textContent = '';
+      }
+    };
+
+    window.initializeStars = function() {
+      const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
+      stickerCells.forEach(cell => {
+        const rowIndex = cell.parentNode.rowIndex - 1;
+        const dayIndex = cell.cellIndex;
+        let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
+
+        if (cell) {
+          // Entferne bestehende Sterne und Undo-Button
+          cell.innerHTML = '';
+
+          // Erstelle Stern(e) basierend auf clickCount
+          if (clickCount === 0) {
+            const star = document.createElement('span');
+            star.className = 'star';
+            star.textContent = '★';
+            star.setAttribute('data-row', rowIndex);
+            star.setAttribute('data-day', dayIndex);
+            star.onclick = function() { toggleStar(this); };
+            cell.appendChild(star);
+          } else if (clickCount === 1) {
+            const star = document.createElement('span');
+            star.className = `star ${usedStars[`${rowIndex}-${dayIndex}`] ? 'used' : ''}`;
+            star.textContent = '⭐';
+            star.setAttribute('data-row', rowIndex);
+            star.setAttribute('data-day', dayIndex);
+            star.onclick = function() { toggleStar(this); };
+            cell.appendChild(star);
+          } else if (clickCount === 2) {
+            const star1 = document.createElement('span');
+            star1.className = `star ${usedStars[`${rowIndex}-${dayIndex}`] ? 'used' : ''}`;
+            star1.textContent = '⭐';
+            star1.setAttribute('data-row', rowIndex);
+            star1.setAttribute('data-day', dayIndex);
+            const star2 = document.createElement('span');
+            star2.className = `star ${usedStars[`${rowIndex}-${dayIndex}`] ? 'used' : ''}`;
+            star2.textContent = '⭐';
+            star2.setAttribute('data-row', rowIndex);
+            star2.setAttribute('data-day', dayIndex);
+            cell.appendChild(star1);
+            cell.appendChild(star2);
+          }
+
+          // Füge den Undo-Button hinzu
+          const undoBtn = document.createElement('span');
+          undoBtn.className = 'undo-btn';
+          undoBtn.textContent = '↺';
+          undoBtn.onclick = function() { undoStar(this); };
+          undoBtn.style.display = clickCount > 0 && !usedStars[`${rowIndex}-${dayIndex}`] ? 'inline-block' : 'none';
+          cell.appendChild(undoBtn);
+        }
+      });
+    };
+
+    window.updateProgressColor = function() {
+      if (starProgress) {
+        const maxStars = parseInt(document.getElementById('max-stars').textContent) || 0;
+        if (maxStars === 0) return; // Vermeide Division durch 0
+        const halfMax = maxStars / 2;
+        const fullMax = maxStars;
+        if (starCount >= fullMax) {
+          starProgress.style.backgroundColor = '#28a745';
+        } else if (starCount >= halfMax) {
+          starProgress.style.backgroundColor = '#ffd700';
+        } else {
+          starProgress.style.backgroundColor = '#ffeb3b';
+        }
+      }
+    };
+
+    // Funktion zum Anzeigen des Fehlermodals
+    window.showStarErrorModal = function() {
+      const modal = document.getElementById('star-error-modal');
+      const message = document.getElementById('star-error-message');
+      if (modal && message) {
+        const theme = document.body.className.includes('dark-theme') ? 'dark-theme' : '';
+        message.className = theme;
+        modal.style.display = 'block';
+      }
+    };
+
+    // Funktion zum Schließen des Fehlermodals
+    window.closeStarErrorModal = function() {
+      const modal = document.getElementById('star-error-modal');
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    };
+
+    // Funktion zum Einlösen einer Belohnung
+    window.claimReward = function(index, checkbox) {
+      // Strengere Validierung des Index
+      if (!Number.isInteger(index) || index < 0 || index >= rewards.length || !rewards[index]) {
+        console.error('Invalid reward index:', index, 'Rewards:', rewards);
+        if (checkbox) checkbox.checked = false;
+        return;
+      }
+      const rewardStars = rewards[index].stars;
+      if (starCount < rewardStars) {
+        showStarErrorModal();
+        if (checkbox) checkbox.checked = false; // Checkbox zurücksetzen
+        return;
+      }
+
+      // Belohnung als eingelöst markieren
+      claimedRewards[index] = true;
+      localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
+
+      // Sterne abziehen
+      starCount -= rewardStars;
+      if (starCount < 0) starCount = 0;
+      localStorage.setItem('starCount', starCount);
+
+      // Markiere die genutzten Sterne, ohne sie zu reduzieren
+      const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
+      let starsUsed = 0;
+      for (let i = 0; i < stickerCells.length && starsUsed < rewardStars; i++) {
+        const cell = stickerCells[i];
+        const rowIndex = cell.parentNode.rowIndex - 1;
+        const dayIndex = cell.cellIndex;
+        const stars = cell.querySelectorAll('.star');
+        for (let star of stars) {
+          if (!star.classList.contains('used') && starsUsed < rewardStars) {
+            const key = `${rowIndex}-${dayIndex}`;
+            usedStars[key] = true;
+            star.classList.add('used');
+            starsUsed++;
+            if (starsUsed >= rewardStars) break;
+          }
+        }
+      }
+      localStorage.setItem('usedStars', JSON.stringify(usedStars));
+
+      // UI aktualisieren
+      if (starCountDisplay && starProgress) {
+        starCountDisplay.textContent = starCount;
+        starProgress.value = starCount;
+      }
+      initializeStars();
+      updateProgressColor();
+      updateWeeklyReward();
+      window.renderRewards();
+    };
+
+    // Globale Funktion zum Rendern der Belohnungen
+    window.renderRewards = function() {
+      const rewardList = document.getElementById('reward-list');
+      const rewardsDiv = document.getElementById('rewards');
+      if (rewardList && rewardsDiv) {
+        // Einstellungen: Liste der Belohnungen mit Checkboxen zum Löschen
+        rewardList.innerHTML = '';
+        rewards.forEach((reward, index) => {
+          const rewardItem = document.createElement('div');
+          rewardItem.innerHTML = `<input type="checkbox" id="reward-${index}" value="${reward.name}"> ${reward.name} (${reward.stars} Sterne) <span class="delete-btn" onclick="deleteReward(${index})">X</span>`;
+          rewardList.appendChild(rewardItem);
+        });
+
+        // Belohnungen-Anzeige: Mit Checkboxen zum Einlösen
+        rewardsDiv.innerHTML = ''; // Vollständig leeren, um alte Elemente zu entfernen
+        rewards.forEach((reward, index) => {
+          const rewardDisplay = document.createElement('div');
+          const isClaimed = claimedRewards[index] === true;
+          const checkbox = document.createElement('input');
+          checkbox.type = 'checkbox';
+          checkbox.id = `claim-reward-${index}`;
+          checkbox.checked = isClaimed;
+          checkbox.disabled = isClaimed;
+          const label = document.createElement('span');
+          label.className = isClaimed ? 'claimed' : '';
+          label.textContent = `${reward.name} (${reward.stars} Sterne)`;
+          rewardDisplay.appendChild(checkbox);
+          rewardDisplay.appendChild(label);
+          rewardsDiv.appendChild(rewardDisplay);
+        });
+      }
+    };
+
+    window.addReward = function() {
+      const newReward = document.getElementById('new-reward');
+      const rewardStars = document.getElementById('reward-stars');
+      if (newReward && rewardStars) {
+        const name = newReward.value.trim();
+        const stars = parseInt(rewardStars.value);
+        if (name && stars >= 1) {
+          rewards.push({ name, stars });
+          claimedRewards.push(false); // Neue Belohnung ist nicht eingelöst
+          localStorage.setItem('rewards', JSON.stringify(rewards));
+          localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
+          window.renderRewards();
+          newReward.value = '';
+          rewardStars.value = 1;
+          initializeStars();
+        }
+      }
+    };
+
+    window.deleteReward = function(index) {
+      if (index >= 0 && index < rewards.length) {
+        rewards.splice(index, 1);
+        claimedRewards.splice(index, 1);
+        localStorage.setItem('rewards', JSON.stringify(rewards));
+        localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
+        window.renderRewards();
+        initializeStars();
+      }
+    };
+
+    window.deleteSelectedRewards = function() {
+      const rewardList = document.getElementById('reward-list');
+      if (rewardList) {
+        const indicesToDelete = [];
+        rewards.forEach((_, index) => {
+          const checkbox = document.getElementById(`reward-${index}`);
+          if (checkbox && checkbox.checked) indicesToDelete.push(index);
+        });
+        indicesToDelete.sort((a, b) => b - a).forEach(index => {
+          rewards.splice(index, 1);
+          claimedRewards.splice(index, 1);
+        });
+        localStorage.setItem('rewards', JSON.stringify(rewards));
+        localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
+        window.renderRewards();
+        initializeStars();
+      }
+    };
+
+    window.resetStars = function() {
+      const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
+      if (stickerCells) {
+        stickerCells.forEach(cell => {
+          const rowIndex = cell.parentNode.rowIndex - 1;
+          const dayIndex = cell.cellIndex;
+          localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, '0');
+        });
+        starCount = 0;
+        usedStars = {};
+        localStorage.setItem('starCount', starCount);
+        localStorage.setItem('usedStars', JSON.stringify(usedStars));
+        if (starCountDisplay && starProgress) {
+          starCountDisplay.textContent = starCount;
+          starProgress.value = starCount;
+        }
+        initializeStars(); // Aktualisiert die UI
+        updateProgressColor();
+        updateWeeklyReward();
+      }
+    };
+
+    window.resetRewards = function() {
+      rewards = [];
+      claimedRewards = [];
+      localStorage.setItem('rewards', JSON.stringify(rewards));
+      localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
+      window.renderRewards();
+      initializeStars();
+    };
+
     // DOM-Content geladen warten
     document.addEventListener('DOMContentLoaded', function() {
       // Einstellungen öffnen/schließen
@@ -548,7 +966,7 @@
         themeSelect.addEventListener('change', function() {
           const theme = this.value;
           document.body.className = theme === 'dark' ? 'dark-theme' : '';
-          document.querySelectorAll('table, #settings, th, td, #assistant-output').forEach(el => {
+          document.querySelectorAll('table, #settings, th, td').forEach(el => {
             el.className = theme === 'dark' ? el.className + ' dark-theme' : el.className.replace(' dark-theme', '');
           });
           localStorage.setItem('theme', theme);
@@ -557,7 +975,7 @@
           themeSelect.value = localStorage.getItem('theme');
           if (localStorage.getItem('theme') === 'dark') {
             document.body.className = 'dark-theme';
-            document.querySelectorAll('table, #settings, th, td, #assistant-output').forEach(el => {
+            document.querySelectorAll('table, #settings, th, td').forEach(el => {
               el.className += ' dark-theme';
             });
           }
@@ -627,7 +1045,6 @@
       }
 
       // Wort-Farb-Zuweisung
-      let wordColors = JSON.parse(localStorage.getItem('wordColors')) || {};
       function renderWordColors() {
         const wordColorList = document.getElementById('word-color-list');
         if (wordColorList) {
@@ -689,35 +1106,7 @@
         applyWordColors();
       };
 
-      // Farben basierend auf Wörtern anwenden
-      function applyWordColors() {
-        const weekPlanCells = document.querySelectorAll('#week-plan td[contenteditable]');
-        const stickerCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
-        if (weekPlanCells && stickerCells) {
-          weekPlanCells.forEach(cell => {
-            const text = cell.textContent.trim().toLowerCase();
-            let color = '';
-            for (const [word, assignedColor] of Object.entries(wordColors)) {
-              if (text.includes(word)) {
-                color = assignedColor;
-                break;
-              }
-            }
-            cell.style.backgroundColor = color;
-          });
-          stickerCells.forEach(cell => {
-            const text = cell.textContent.trim().toLowerCase();
-            let color = '';
-            for (const [word, assignedColor] of Object.entries(wordColors)) {
-              if (text.includes(word)) {
-                color = assignedColor;
-                break;
-              }
-            }
-            cell.style.backgroundColor = color;
-          });
-        }
-      }
+      // Initiales Anwenden der Wortfarben
       applyWordColors();
 
       // Wochenplan speichern
@@ -741,13 +1130,15 @@
         });
       }
 
-      // Stickerkarte Ziele speichern und löschen
+      // Stickerkarte Ziele speichern
       const stickerGoalCells = document.querySelectorAll('#sticker-chart td[contenteditable]');
       if (stickerGoalCells) {
         stickerGoalCells.forEach(cell => {
           cell.addEventListener('input', () => {
             localStorage.setItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`, cell.textContent);
             applyWordColors();
+            updateMaxStars();
+            updateWeeklyReward();
           });
           if (localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`)) {
             cell.textContent = localStorage.getItem(`sticker-goal-${cell.parentNode.rowIndex - 1}`);
@@ -755,236 +1146,60 @@
         });
       }
 
-      window.deleteGoal = function(btn) {
-        const cell = btn.parentElement;
-        const rowIndex = cell.parentNode.rowIndex - 1;
-        if (cell) {
-          cell.textContent = '';
-          localStorage.setItem(`sticker-goal-${rowIndex}`, '');
-          applyWordColors();
-        }
-      };
+      // Initiale Berechnung der maximalen Sterne
+      updateMaxStars();
 
       // Sterne zählen und speichern
-      let starCount = parseInt(localStorage.getItem('starCount')) || 0;
-      const starCountDisplay = document.getElementById('star-count');
-      const starProgress = document.getElementById('star-progress');
       if (starCountDisplay && starProgress) {
         starCountDisplay.textContent = starCount;
         starProgress.value = starCount;
         updateProgressColor();
       }
 
-      const stickerCells = document.querySelectorAll('#sticker-chart td:not(:first-child)');
-      if (stickerCells) {
-        // Initialisiere Sterne mit Event-Listener und Zustand
-        function initializeStars() {
-          stickerCells.forEach(cell => {
-            const rowIndex = cell.parentNode.rowIndex - 1;
-            const dayIndex = cell.cellIndex;
-            let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
-
-            if (cell) {
-              // Entferne bestehende Sterne und Undo-Button
-              cell.innerHTML = '';
-
-              // Erstelle Stern(e) basierend auf clickCount
-              if (clickCount === 0) {
-                const star = document.createElement('span');
-                star.className = 'star';
-                star.textContent = '★';
-                star.onclick = function() { toggleStar(this); };
-                cell.appendChild(star);
-              } else if (clickCount === 1) {
-                const star = document.createElement('span');
-                star.className = 'star';
-                star.textContent = '⭐';
-                star.onclick = function() { toggleStar(this); };
-                cell.appendChild(star);
-              } else if (clickCount === 2) {
-                const star1 = document.createElement('span');
-                star1.className = 'star disabled';
-                star1.textContent = '⭐';
-                const star2 = document.createElement('span');
-                star2.className = 'star disabled';
-                star2.textContent = '⭐';
-                cell.appendChild(star1);
-                cell.appendChild(star2);
-              }
-
-              // Füge den Undo-Button hinzu
-              const undoBtn = document.createElement('span');
-              undoBtn.className = 'undo-btn';
-              undoBtn.textContent = '↺';
-              undoBtn.onclick = function() { undoStar(this); };
-              undoBtn.style.display = clickCount > 0 ? 'inline-block' : 'none';
-              cell.appendChild(undoBtn);
-            }
-          });
-        }
-        initializeStars();
-
-        function toggleStar(star) {
-          const cell = star.parentNode;
-          const rowIndex = cell.parentNode.rowIndex - 1;
-          const dayIndex = cell.cellIndex;
-          let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
-
-          if (clickCount < 2) {
-            clickCount++;
-            if (clickCount === 1) {
-              starCount++;
-            } else if (clickCount === 2) {
-              starCount++;
-            }
-
-            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
-            localStorage.setItem('starCount', starCount);
-
-            if (starCountDisplay && starProgress) {
-              starCountDisplay.textContent = starCount;
-              starProgress.value = starCount;
-            }
-            initializeStars();
-            updateProgressColor();
-            updateWeeklyReward();
-          }
-        }
-
-        window.undoStar = function(btn) {
-          const cell = btn.parentNode;
-          const rowIndex = cell.parentNode.rowIndex - 1;
-          const dayIndex = cell.cellIndex;
-          let clickCount = parseInt(localStorage.getItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`)) || 0;
-
-          if (clickCount > 0) {
-            clickCount--;
-            starCount--;
-
-            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, clickCount);
-            localStorage.setItem('starCount', starCount);
-
-            if (starCountDisplay && starProgress) {
-              starCountDisplay.textContent = starCount;
-              starProgress.value = starCount;
-            }
-            initializeStars();
-            updateProgressColor();
-            updateWeeklyReward();
-          }
-        };
-      }
-
-      // Fortschrittsanzeige Farbe aktualisieren
-      function updateProgressColor() {
-        if (starProgress) {
-          if (starCount >= 30) {
-            starProgress.style.backgroundColor = '#28a745';
-          } else if (starCount >= 15) {
-            starProgress.style.backgroundColor = '#ffd700';
-          } else {
-            starProgress.style.backgroundColor = '#ffeb3b';
-          }
-        }
-      }
+      initializeStars();
 
       // Belohnungen verwalten
-      let rewards = [];
       try {
-        rewards = JSON.parse(localStorage.getItem('rewards')) || [];
+        const storedRewards = JSON.parse(localStorage.getItem('rewards')) || [];
+        if (Array.isArray(storedRewards)) {
+          rewards = storedRewards.map(item => ({
+            name: item.name || '',
+            stars: item.stars || 1
+          }));
+        }
       } catch (e) {
         console.error('Fehler beim Parsen der Belohnungen aus localStorage:', e);
         rewards = [];
       }
 
-      function renderRewards() {
-        const rewardList = document.getElementById('reward-list');
-        const rewardsDiv = document.getElementById('rewards');
-        if (rewardList && rewardsDiv) {
-          rewardList.innerHTML = '';
-          rewardsDiv.innerHTML = '';
-          rewards.forEach((reward, index) => {
-            const rewardItem = document.createElement('div');
-            rewardItem.innerHTML = `<input type="checkbox" id="reward-${index}" value="${reward}"> ${reward} <span class="delete-btn" onclick="deleteReward(${index})">X</span>`;
-            rewardList.appendChild(rewardItem);
-
-            const rewardDisplay = document.createElement('div');
-            rewardDisplay.textContent = reward;
-            rewardsDiv.appendChild(rewardDisplay);
-          });
-        }
+      // Synchronisiere claimedRewards mit der Länge von rewards
+      claimedRewards = Array(rewards.length).fill(false);
+      const storedClaimedRewards = JSON.parse(localStorage.getItem('claimedRewards')) || [];
+      for (let i = 0; i < Math.min(storedClaimedRewards.length, rewards.length); i++) {
+        claimedRewards[i] = storedClaimedRewards[i] || false;
       }
-      renderRewards();
+      localStorage.setItem('claimedRewards', JSON.stringify(claimedRewards));
 
-      window.addReward = function() {
-        const newReward = document.getElementById('new-reward');
-        if (newReward) {
-          const value = newReward.value;
-          if (value) {
-            rewards.push(value);
-            localStorage.setItem('rewards', JSON.stringify(rewards));
-            renderRewards();
-            newReward.value = '';
-            initializeStars();
+      window.renderRewards();
+
+      // Event delegation für Belohnungen-Div
+      const rewardsDiv = document.getElementById('rewards');
+      if (rewardsDiv) {
+        rewardsDiv.addEventListener('change', function(e) {
+          const checkbox = e.target;
+          if (checkbox.type === 'checkbox' && checkbox.id.startsWith('claim-reward-')) {
+            const index = parseInt(checkbox.id.split('-')[2], 10);
+            // Prüfen, ob der Index noch gültig ist
+            if (index >= 0 && index < rewards.length) {
+              claimReward(index, checkbox);
+            } else {
+              console.warn('Index out of bounds during event handling:', index, 'Rewards length:', rewards.length);
+              checkbox.checked = false; // Zurücksetzen
+              window.renderRewards(); // Neu rendern, um Konsistenz sicherzustellen
+            }
           }
-        }
-      };
-
-      window.deleteReward = function(index) {
-        rewards.splice(index, 1);
-        localStorage.setItem('rewards', JSON.stringify(rewards));
-        renderRewards();
-        initializeStars();
-      };
-
-      window.deleteSelectedRewards = function() {
-        const rewardList = document.getElementById('reward-list');
-        if (rewardList) {
-          rewards = rewards.filter((_, index) => {
-            const checkbox = document.getElementById(`reward-${index}`);
-            return !checkbox || !checkbox.checked;
-          });
-          localStorage.setItem('rewards', JSON.stringify(rewards));
-          renderRewards();
-          initializeStars();
-        }
-      };
-
-      window.resetStars = function() {
-        if (stickerCells) {
-          stickerCells.forEach(cell => {
-            const rowIndex = cell.parentNode.rowIndex - 1;
-            const dayIndex = cell.cellIndex;
-            localStorage.setItem(`sticker-cell-${rowIndex}-${dayIndex}-clicks`, '0');
-          });
-          starCount = 0;
-          localStorage.setItem('starCount', starCount);
-          if (starCountDisplay && starProgress) {
-            starCountDisplay.textContent = starCount;
-            starProgress.value = starCount;
-          }
-          initializeStars(); // Aktualisiert die UI
-          updateProgressColor();
-          updateWeeklyReward();
-        }
-      };
-
-      window.resetRewards = function() {
-        rewards = [];
-        localStorage.setItem('rewards', JSON.stringify(rewards));
-        renderRewards();
-        initializeStars();
-      };
-
-      function updateWeeklyReward() {
-        const weeklyReward = document.getElementById('weekly-reward');
-        if (weeklyReward && starCount >= 30 && rewards && rewards.length > 0) {
-          weeklyReward.textContent = `Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}`;
-        } else if (weeklyReward) {
-          weeklyReward.textContent = '';
-        }
+        });
       }
-      updateWeeklyReward();
 
       // Sprachmodul für Vorlesen
       let speechSynthesis = window.speechSynthesis;
@@ -1067,130 +1282,6 @@
           document.getElementById('speech-controls').style.display = 'none';
         }
       };
-
-      // KI-Sprachassistent
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert('Dein Browser unterstützt die Spracherkennung nicht. Bitte verwende einen modernen Browser wie Chrome.');
-        return;
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'de-DE';
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
-
-      let isAssistantActive = false;
-      const assistantOutput = document.getElementById('assistant-output');
-
-      window.startAssistant = function() {
-        if (isAssistantActive) return;
-        isAssistantActive = true;
-        recognition.start();
-        assistantOutput.textContent = 'Assistent gestartet. Sprich jetzt...';
-        assistantOutput.style.display = 'block';
-      };
-
-      window.stopAssistant = function() {
-        if (!isAssistantActive) return;
-        isAssistantActive = false;
-        recognition.stop();
-        assistantOutput.textContent = 'Assistent gestoppt.';
-      };
-
-      recognition.onresult = function(event) {
-        const transcript = event.results[0][0].transcript.toLowerCase();
-        assistantOutput.textContent = `Du hast gesagt: ${transcript}`;
-        processAssistantCommand(transcript);
-        if (isAssistantActive) {
-          setTimeout(() => recognition.start(), 500); // Neustart der Erkennung
-        }
-      };
-
-      recognition.onend = function() {
-        if (isAssistantActive) {
-          setTimeout(() => recognition.start(), 500); // Neustart der Erkennung
-        } else {
-          assistantOutput.textContent = 'Assistent gestoppt.';
-        }
-      };
-
-      recognition.onerror = function(event) {
-        assistantOutput.textContent = 'Fehler bei der Spracherkennung: ' + event.error;
-        isAssistantActive = false;
-      };
-
-      function processAssistantCommand(command) {
-        const days = ['montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag', 'sonntag'];
-        const times = ['morgens', 'nachmittags', 'abends'];
-        let response = '';
-
-        // Frage nach einem bestimmten Tag und Zeit
-        for (let dayIndex = 0; dayIndex < days.length; dayIndex++) {
-          for (let timeIndex = 0; timeIndex < times.length; timeIndex++) {
-            if (command.includes(days[dayIndex]) && command.includes(times[timeIndex])) {
-              const cellIndex = dayIndex * 3 + timeIndex;
-              const cell = weekPlanCells[cellIndex];
-              const cellText = cell.textContent.trim();
-              if (cellText) {
-                response = `Am ${days[dayIndex]} ${times[timeIndex]} hast du: ${cellText}.`;
-              } else {
-                response = `Am ${days[dayIndex]} ${times[timeIndex]} hast du nichts eingetragen.`;
-              }
-              break;
-            }
-          }
-          if (response) break;
-        }
-
-        // Frage nach dem aktuellen Tag
-        if (command.includes('heute')) {
-          const today = new Date();
-          const dayIndex = today.getDay() === 0 ? 6 : today.getDay() - 1; // Sonntag -> 6, Montag -> 0
-          const dayCells = weekPlanCells.slice(dayIndex * 3, (dayIndex + 1) * 3);
-          response = `Heute ist ${days[dayIndex]}. Dein Plan: `;
-          dayCells.forEach((cell, index) => {
-            const cellText = cell.textContent.trim();
-            if (cellText) {
-              response += `${times[index]}: ${cellText}. `;
-            }
-          });
-          if (response === `Heute ist ${days[dayIndex]}. Dein Plan: `) {
-            response += 'Du hast nichts eingetragen.';
-          }
-        }
-
-        // Frage nach Sternen
-        if (command.includes('wieviele sterne') || command.includes('wie viele sterne')) {
-          response = `Du hast aktuell ${starCount} von 30 Sternen.`;
-        }
-
-        // Frage nach Belohnungen
-        if (command.includes('belohnung') || command.includes('belohnungen')) {
-          if (rewards.length > 0) {
-            response = `Deine Belohnungen sind: ${rewards.join(', ')}.`;
-            if (starCount >= 30) {
-              response += ` Glückwunsch! Du hast eine Belohnung freigeschaltet: ${rewards[0]}.`;
-            }
-          } else {
-            response = 'Du hast noch keine Belohnungen eingetragen.';
-          }
-        }
-
-        // Standardantwort, falls keine passende Frage
-        if (!response) {
-          response = 'Entschuldigung, das habe ich nicht verstanden. Du kannst nach deinem Wochenplan, Sternen oder Belohnungen fragen.';
-        }
-
-        // Antwort vorlesen
-        const utterance = new SpeechSynthesisUtterance(response);
-        utterance.lang = 'de-DE';
-        utterance.rate = parseFloat(document.getElementById('speech-speed').value);
-        speechSynthesis.speak(utterance);
-
-        // Antwort anzeigen
-        assistantOutput.textContent = response;
-      }
     });
   </script>
 </body>
